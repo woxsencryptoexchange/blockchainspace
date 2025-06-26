@@ -42,7 +42,7 @@ export async function GetChains() {
 
 
 //⭐ get data by coingeko_id:  https://api.coingecko.com/api/v3/coins/polygon-ecosystem-token (description,images,categories,links,country_origin,price,MCAP,market_cap_rank,total_supply,tickers,24 or day or week volume data and all)
-
+//⭐ https://www.oklink.com/account/my-api
 
 
 
