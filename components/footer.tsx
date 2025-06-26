@@ -7,13 +7,13 @@ import Link from "next/link"
 
 export function Footer() {
   const socialLinks = [
-    { icon: Twitter, href: "https://twitter.com/woxsenuniv", label: "Twitter" },
-    { icon: Linkedin, href: "https://linkedin.com/school/woxsen-university", label: "LinkedIn" },
+    { icon: Twitter, href: "https://x.com/Woxsen", label: "Twitter" },
+    { icon: Linkedin, href: "https://www.linkedin.com/company/airesearchcentre/posts/?feedView=all", label: "LinkedIn" },
   ]
 
   const quickLinks = [
-    { name: "NOOB View", href: "/" },
-    { name: "Pro Deep Dive", href: "/pro" },
+    { name: "Noob View", href: "/" },
+    { name: "Pro View", href: "/pro" },
     { name: "AIRC Website", href: "https://wou.aircwou.in/" },
   ]
 
@@ -71,12 +71,14 @@ export function Footer() {
             <ul className="space-y-2">
               {quickLinks.map((link) => (
                 <li key={link.name}>
-                  <Link
+                    <Link
                     href={link.href}
                     className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors text-sm"
-                  >
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >
                     {link.name}
-                  </Link>
+                    </Link>
                 </li>
               ))}
             </ul>
@@ -126,29 +128,7 @@ export function Footer() {
           <p className="text-sm text-gray-500 dark:text-gray-500 mb-4 md:mb-0">
             © 2025 BlockchainSpace. All rights reserved. Built with ❤️ by AIRC, Woxsen University.
           </p>
-          <div className="flex items-center space-x-4 text-sm">
-            <Link
-              href="#"
-              className="text-gray-500 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              href="#"
-              className="text-gray-500 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-            >
-              Terms of Service
-            </Link>
-            <a
-              href="https://woxsen.edu.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-500 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors flex items-center"
-            >
-              Woxsen University
-              <ExternalLink className="w-3 h-3 ml-1" />
-            </a>
-          </div>
+   
         </motion.div>
       </div>
     </footer>

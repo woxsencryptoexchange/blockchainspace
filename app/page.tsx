@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo ,useEffect} from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Filter, X, Plus, Minus, Search, TrendingUp, Zap, DollarSign, Sun, Moon, GitCompare } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,7 @@ import { Footer } from "@/components/footer"
 import { ChatWidget } from "@/components/chat-widget"
 import { LoadingScreen } from "@/components/loading-screen"
 import { useLoading } from "@/hooks/use-loading"
+import {GetChains} from './api/fetch-chains';
 
 type FilterState = {
   speed: string[]
@@ -117,16 +118,16 @@ export default function BlockchainSpace() {
   }
 
   const getSecurityColor = (security: string) => {
-    switch (security) {
-      case "High":
-        return "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20"
-      case "Medium":
+    // switch (security) {
+    //   case "High":
+    //     return "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20"
+    //   case "Medium":
         return "text-yellow-600 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-900/20"
-      case "Low":
-        return "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
-      default:
-        return "text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20"
-    }
+    //   case "Low":
+    //     return "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
+    //   default:
+        // return "text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20"
+    // }
   }
 
   const handleCompare = (chains: typeof blockchainData) => {
@@ -160,6 +161,7 @@ export default function BlockchainSpace() {
       </div>
     )
   }
+
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">
@@ -210,6 +212,14 @@ export default function BlockchainSpace() {
               <GitCompare className="w-4 h-4 mr-2" />
               Compare
             </Button>
+
+        <Button
+            onClick={()=>{GetChains()}}
+            className="bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-400"
+          >
+            Fetch Chains
+          </Button>
+
           </motion.div>
 
           {/* Results Counter */}
@@ -245,7 +255,7 @@ export default function BlockchainSpace() {
                           </div>
                         </div>
                         <Badge className={`${getSecurityColor(blockchain.security)} border-0 text-xs px-2 py-1`}>
-                          {blockchain.security}
+                          ID: {blockchain.id}
                         </Badge>
                       </div>
 
