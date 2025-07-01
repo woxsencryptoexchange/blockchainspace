@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import type { blockchainData } from "@/data/blockchains"
 
 interface ComparisonViewProps {
-  selectedChains: typeof blockchainData
+  selectedChains: any
   onAddMore: () => void
   onExit: () => void
 }
@@ -88,7 +88,7 @@ export function ComparisonView({ selectedChains, onAddMore, onExit }: Comparison
             style={{ gridTemplateColumns: `200px repeat(${selectedChains.length}, 1fr)` }}
           >
             <div></div>
-            {selectedChains.map((chain) => (
+            {selectedChains.map((chain:any) => (
               <Card key={chain.id} className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl mb-2">{chain.logo}</div>
@@ -115,7 +115,7 @@ export function ComparisonView({ selectedChains, onAddMore, onExit }: Comparison
                   <metric.icon className={`w-4 h-4 ${metric.color}`} />
                   <span className="font-medium text-black dark:text-white">{metric.label}</span>
                 </div>
-                {selectedChains.map((chain) => (
+                {selectedChains.map((chain:any) => (
                   <Card
                     key={`${chain.id}-${metric.key}`}
                     className="bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800"
@@ -146,14 +146,14 @@ export function ComparisonView({ selectedChains, onAddMore, onExit }: Comparison
                 <Code className="w-4 h-4 text-purple-500" />
                 <span className="font-medium text-black dark:text-white">Languages</span>
               </div>
-              {selectedChains.map((chain) => (
+              {selectedChains.map((chain:any) => (
                 <Card
                   key={`${chain.id}-languages`}
                   className="bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800"
                 >
                   <CardContent className="p-4">
                     <div className="flex flex-wrap gap-1">
-                      {chain.smartContractLanguages?.map((lang, index) => (
+                      {chain.smartContractLanguages?.map((lang:any, index:number) => (
                         <Badge
                           key={index}
                           variant="outline"
@@ -180,7 +180,7 @@ export function ComparisonView({ selectedChains, onAddMore, onExit }: Comparison
                 <Globe className="w-4 h-4 text-blue-500" />
                 <span className="font-medium text-black dark:text-white">RPC Endpoint</span>
               </div>
-              {selectedChains.map((chain) => (
+              {selectedChains.map((chain:any) => (
                 <Card
                   key={`${chain.id}-rpc`}
                   className="bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800"
@@ -216,7 +216,7 @@ export function ComparisonView({ selectedChains, onAddMore, onExit }: Comparison
                 <Globe className="w-4 h-4 text-green-500" />
                 <span className="font-medium text-black dark:text-white">WSS Endpoint</span>
               </div>
-              {selectedChains.map((chain) => (
+              {selectedChains.map((chain:any) => (
                 <Card
                   key={`${chain.id}-wss`}
                   className="bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800"

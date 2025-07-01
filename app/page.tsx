@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
 import { useTheme } from "@/contexts/theme-context"
-import { blockchainData } from "@/data/blockchains"
 import Link from "next/link"
 import { CompareModal } from "@/components/compare-modal"
 import { ComparisonView } from "@/components/comparison-view"
@@ -16,14 +15,12 @@ import { Footer } from "@/components/footer"
 import { ChatWidget } from "@/components/chat-widget"
 import { LoadingScreen } from "@/components/loading-screen"
 import { useLoading } from "@/hooks/use-loading"
-import {GetChains} from './api/fetch-chains';
-// Removed server-side modules not available in the browser
+import {GetChains, BlockchainData} from './api/fetch-chains';
 
 
 type FilterState = {
   speed: string[]
-  cost: string[]
-  popularity: string[]
+  tvl: string[]
   performance: string[]
   search: string
   count: number
@@ -33,19 +30,52 @@ export default function BlockchainSpace() {
   const [activeTab, setActiveTab] = useState("noob")
   const [showFilters, setShowFilters] = useState(false)
   const { theme, toggleTheme } = useTheme()
+  const [blockchainData, setBlockchainData] = useState<BlockchainData[]>([])
   const [filters, setFilters] = useState<FilterState>({
     speed: [],
-    cost: [],
-    popularity: [],
+    tvl: [],
     performance: [],
     search: "",
-    count: 20,
+    count: 50,
   })
 
   const [showCompareModal, setShowCompareModal] = useState(false)
   const [compareMode, setCompareMode] = useState(false)
-  const [selectedChains, setSelectedChains] = useState<typeof blockchainData>([])
+  const [selectedChains, setSelectedChains] = useState<BlockchainData[]>([])
   const isLoading = useLoading(2500)
+
+
+    const handleFetchChains = async () => {
+    try {
+      const res = await GetChains();
+      return res;
+    } catch (e: any) {
+      console.error("Error fetching chains:", e.message);
+    }
+  }
+
+  // Load blockchain data from JSON file
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+
+        const response0:any = await handleFetchChains();
+
+        if(response0){
+        return setBlockchainData(response0);
+        }
+
+        const response = await fetch('/api/blockchain-data')
+        if (response.ok) {
+          const data = await response.json()
+          setBlockchainData(data)
+        }
+      } catch (error) {
+        console.error('Error loading blockchain data:', error)
+      }
+    }
+    loadData()
+  }, [])
 
   const filteredBlockchains = useMemo(() => {
     let filtered = [...blockchainData]
@@ -54,8 +84,8 @@ export default function BlockchainSpace() {
     if (filters.search) {
       filtered = filtered.filter(
         (blockchain) =>
-          blockchain.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-          blockchain.symbol.toLowerCase().includes(filters.search.toLowerCase()),
+          blockchain?.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+          blockchain?.symbol?.toLowerCase().includes(filters.search.toLowerCase()),
       )
     }
 
@@ -68,26 +98,26 @@ export default function BlockchainSpace() {
       })
     }
 
-    // Cost filters
-    if (filters.cost.length > 0) {
+    // TVL filters
+    if (filters.tvl.length > 0) {
       filtered = filtered.filter((blockchain) => {
-        if (filters.cost.includes("cheap") && blockchain.gasFee < 1) return true
-        if (filters.cost.includes("expensive") && blockchain.gasFee >= 1) return true
+        if (filters.tvl.includes("high") && blockchain.tvl > 10) return true
+        if (filters.tvl.includes("low") && blockchain.tvl <= 10) return true
         return false
       })
     }
 
     // Performance filters
     if (filters.performance.length > 0) {
-      filtered = filtered.filter((blockchain) => {
+      filtered = filtered.filter((blockchain:any) => {
         if (filters.performance.includes("high-tps") && blockchain.tps > 5000) return true
-        if (filters.performance.includes("low-latency") && blockchain.blockTime < 5) return true
+        if (filters.performance.includes("high-tvl") && blockchain.tvl > 50) return true
         return false
       })
     }
 
     return filtered.slice(0, filters.count)
-  }, [filters])
+  }, [filters,blockchainData])
 
   if (isLoading) {
     return <LoadingScreen />
@@ -95,7 +125,7 @@ export default function BlockchainSpace() {
 
   const toggleFilter = (category: keyof FilterState, value: string) => {
     // Only allow toggling for array-type categories
-    if (["speed", "cost", "popularity", "performance"].includes(category)) {
+    if (["speed", "tvl", "performance"].includes(category)) {
       setFilters((prev) => {
         const arr = prev[category] as string[]
         return {
@@ -111,37 +141,18 @@ export default function BlockchainSpace() {
   const clearFilters = () => {
     setFilters({
       speed: [],
-      cost: [],
-      popularity: [],
+      tvl: [],
       performance: [],
       search: "",
       count: 20,
     })
   }
 
-  const getSecurityColor = (security: string) => {
-    // switch (security) {
-    //   case "High":
-    //     return "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20"
-    //   case "Medium":
-        return "text-yellow-600 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-900/20"
-    //   case "Low":
-    //     return "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
-    //   default:
-        // return "text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20"
-    // }
+  const getIdColor = () => {
+    return "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20"
   }
 
-  const handleFetchChains = async () => {
-    try {
-      const res = await GetChains();
-      // You cannot write files from the browser; handle data as needed here
-      console.log("Fetched chains:", res);
-    } catch (e: any) {
-      console.error("Error fetching chains:", e.message);
-    }
-  }
-  const handleCompare = (chains: typeof blockchainData) => {
+  const handleCompare = (chains: BlockchainData[]) => {
     setSelectedChains(chains)
     setCompareMode(true)
   }
@@ -224,12 +235,12 @@ export default function BlockchainSpace() {
               Compare
             </Button>
 
-        <Button
+        {/* <Button
             onClick={()=>{handleFetchChains()}}
             className="bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-400"
           >
             Fetch Chains
-          </Button>
+          </Button> */}
 
           </motion.div>
 
@@ -245,7 +256,7 @@ export default function BlockchainSpace() {
             <AnimatePresence>
               {filteredBlockchains.map((blockchain, index) => (
                 <motion.div
-                  key={blockchain.id}
+                  key={index+1}
                   layout
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -254,19 +265,23 @@ export default function BlockchainSpace() {
                   whileHover={{ scale: 1.02, y: -2 }}
                   className="group relative"
                 >
-                  <Link href={`/${blockchain.name.toLowerCase().replace(/\s+/g, "-")}`}>
+                  <Link href={`/${blockchain?.name?.toLowerCase().replace(/\s+/g, "-")}`}>
                     <div className="relative p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 cursor-pointer">
                       {/* Header */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-2">
-                          <div className="text-lg">{blockchain.logo}</div>
+                          <img src={blockchain.logo} alt={blockchain.name} className="w-6 h-6" onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }} />
+                          <div className="text-lg hidden">{blockchain?.name?.charAt(0)}</div>
                           <div>
-                            <h3 className="font-semibold text-sm text-black dark:text-white">{blockchain.name}</h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{blockchain.symbol}</p>
+                            <h3 className="font-semibold text-sm text-black dark:text-white">{blockchain?.name}</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{blockchain?.symbol}</p>
                           </div>
                         </div>
-                        <Badge className={`${getSecurityColor(blockchain.security)} border-0 text-xs px-2 py-1`}>
-                          ID: {blockchain.id}
+                        <Badge className={`${getIdColor()} border-0 text-xs px-2 py-1`}>
+                          ID: {blockchain?.id}
                         </Badge>
                       </div>
 
@@ -274,31 +289,26 @@ export default function BlockchainSpace() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-1">
-                            <DollarSign className="w-3 h-3 text-green-500" />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Gas</span>
+                            <TrendingUp className="w-3 h-3 text-purple-500" />
+                            <span className="text-xs text-gray-600 dark:text-gray-400">TPS</span>
                           </div>
-                          <span className="text-xs font-medium text-green-500">${blockchain.gasFee}</span>
+                          <span className="text-xs font-medium text-purple-500">{blockchain?.tps?.toLocaleString()}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-1">
+                            <DollarSign className="w-3 h-3 text-green-500" />
+                            <span className="text-xs text-gray-600 dark:text-gray-400">Market Cap</span>
+                          </div>
+                          <span className="text-xs font-medium text-green-500">${blockchain?.marketCap}B</span>
                         </div>
 
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-1">
                             <Zap className="w-3 h-3 text-blue-500" />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Time</span>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">TVL</span>
                           </div>
-                          <span className="text-xs font-medium text-blue-500">{blockchain.blockTime}s</span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-1">
-                            <TrendingUp className="w-3 h-3 text-purple-500" />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">TPS</span>
-                          </div>
-                          <span className="text-xs font-medium text-purple-500">{blockchain.tps.toLocaleString()}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600 dark:text-gray-400">Market Cap</span>
-                          <span className="text-xs font-medium text-orange-500">${blockchain.marketCap}B</span>
+                          <span className="text-xs font-medium text-blue-500">${blockchain?.tvl}B</span>
                         </div>
                       </div>
                     </div>
@@ -414,21 +424,21 @@ export default function BlockchainSpace() {
                     </div>
                   </div>
 
-                  {/* Cost Filters */}
+                  {/* TVL Filters */}
                   <div>
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Cost</h3>
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">TVL</h3>
                     <div className="space-y-2">
                       {[
-                        { value: "cheap", label: "Cheap (<$1)" },
-                        { value: "expensive", label: "Expensive (≥$1)" },
+                        { value: "high", label: "High (>$10B)" },
+                        { value: "low", label: "Low (≤$10B)" },
                       ].map((option) => (
                         <Button
                           key={option.value}
-                          variant={filters.cost.includes(option.value) ? "default" : "outline"}
+                          variant={filters.tvl.includes(option.value) ? "default" : "outline"}
                           size="sm"
-                          onClick={() => toggleFilter("cost", option.value)}
+                          onClick={() => toggleFilter("tvl", option.value)}
                           className={`w-full justify-start ${
-                            filters.cost.includes(option.value)
+                            filters.tvl.includes(option.value)
                               ? "bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
                               : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                           }`}
@@ -445,7 +455,7 @@ export default function BlockchainSpace() {
                     <div className="space-y-2">
                       {[
                         { value: "high-tps", label: "High TPS (>5000)" },
-                        { value: "low-latency", label: "Low Latency (<5s)" },
+                        { value: "high-tvl", label: "High TVL (>$50B)" },
                       ].map((option) => (
                         <Button
                           key={option.value}

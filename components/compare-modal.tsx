@@ -12,7 +12,7 @@ interface CompareModalProps {
   isOpen: boolean
   onClose: () => void
   onCompare: (selectedChains: typeof blockchainData) => void
-  selectedChains: typeof blockchainData
+  selectedChains: any
 }
 
 export function CompareModal({ isOpen, onClose, onCompare, selectedChains }: CompareModalProps) {
