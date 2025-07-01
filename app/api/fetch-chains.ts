@@ -1,4 +1,4 @@
-"use client";
+
 
 export async function GetChains() {
   try {
@@ -12,20 +12,48 @@ export async function GetChains() {
     data.sort((a: any, b: any) => {
       return b.tvl - a.tvl;
     });
+
+    data = data.slice(0,53); // Limit to top 50 chains
     
-
-    data = data.slice(0, 50); // limit to 20 chains
-
-    console.log("Fetched chains:", data);
-
-    const blockchainData = data.map((chain: any) => ({
+    let blockchainData = data.map((chain: any) => ({
      id:chain.chainId,
      name:chain.name,
      symbol: chain.tokenSymbol,
+     gecko_id: ["blast","base","morph","goat","bob","taiko"].includes(chain.name.toLowerCase()) ? chain.name.toLowerCase():chain.gecko_id,
+     cmcId: chain.cmcId,
      image: `https://icons.llamao.fi/icons/chains/rsz_${chain.name.toLowerCase()}?w=48&h=48`,
+     tvl:chain.tvl
     }));
 
-    console.log(blockchainData);
+    for(let i = 0; i < blockchainData.length; i++) {
+      
+      if(blockchainData[i].name == "BSquared") {
+        blockchainData[i].gecko_id = "bsquared-network";
+      }
+
+      if(blockchainData[i].name == "Hemi"){
+        blockchainData[i].gecko_id = "hemis";
+      }
+
+      if(blockchainData[i].name == "Bitlayer"){
+        blockchainData[i].gecko_id = "bitlayer-bitvm";
+      }
+
+      if(blockchainData[i].name == "AILayer"){
+        blockchainData[i].gecko_id = "ailayer-token";
+      }
+
+      // Soneium -> mulit bridge token...
+      // Lenia -> mulit bridge token...
+      // unichain -> mulit bridge token...
+
+    }
+
+    blockchainData = blockchainData.filter((chain: any) => {
+       return chain.gecko_id && chain.gecko_id !== "null" && chain.gecko_id !== "undefined";
+    })
+
+    return blockchainData;    
     
   } catch (error) {
     console.error("Error fetching chains:", error);
@@ -33,6 +61,7 @@ export async function GetChains() {
   }
 }
 
+// https://api.llama.fi/v2/chains
 // chainId: 1;
 // cmcId: "1027";
 // gecko_id: "ethereum";
@@ -42,9 +71,9 @@ export async function GetChains() {
 
 
 //⭐ get data by coingeko_id:  https://api.coingecko.com/api/v3/coins/polygon-ecosystem-token (description,images,categories,links,country_origin,price,MCAP,market_cap_rank,total_supply,tickers,24 or day or week volume data and all)
-//⭐ https://www.oklink.com/account/my-api
+//⭐ MULTI  https://api.coingecko.com/api/v3/coins/markets?ids=bitcoin%2Cethereum%2Cbinancecoin%2Cripple%2Ccardano&locale=en&source=geckowidgets&vs_currency=usd
 
-
+// MARKET SENTEMENT: https://www.coingecko.com/sentiment_votes/voted_coin_today?api_symbol=ethereum
 
 // https://api.llama.fi/overview/options/ethereum?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true&dataType=dailyPremiumVolume
 
@@ -78,3 +107,14 @@ export async function GetChains() {
 
     // gas price ... // https://api.blocknative.com/gasprices/blockprices?chainid=8453
 
+
+
+// Detailed Discription: https://api.coinpaprika.com/v1/coins/sol-solana 
+
+// https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24hr_change=true
+
+
+// FREE GAS PRICE API:
+
+// https://api.polygonscan.com/api?module=gastracker&action=gasoracle&apikey=7T4VWK94B8IK5Q8BWYM8BW6WXAAM2SUNX4
+// https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=YKVKNKRSR5IT5VM1W27MDZ5NX7KG2HGS2Q

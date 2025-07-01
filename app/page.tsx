@@ -17,6 +17,8 @@ import { ChatWidget } from "@/components/chat-widget"
 import { LoadingScreen } from "@/components/loading-screen"
 import { useLoading } from "@/hooks/use-loading"
 import {GetChains} from './api/fetch-chains';
+// Removed server-side modules not available in the browser
+
 
 type FilterState = {
   speed: string[]
@@ -130,6 +132,15 @@ export default function BlockchainSpace() {
     // }
   }
 
+  const handleFetchChains = async () => {
+    try {
+      const res = await GetChains();
+      // You cannot write files from the browser; handle data as needed here
+      console.log("Fetched chains:", res);
+    } catch (e: any) {
+      console.error("Error fetching chains:", e.message);
+    }
+  }
   const handleCompare = (chains: typeof blockchainData) => {
     setSelectedChains(chains)
     setCompareMode(true)
@@ -214,7 +225,7 @@ export default function BlockchainSpace() {
             </Button>
 
         <Button
-            onClick={()=>{GetChains()}}
+            onClick={()=>{handleFetchChains()}}
             className="bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-400"
           >
             Fetch Chains
