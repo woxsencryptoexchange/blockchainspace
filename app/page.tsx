@@ -2,7 +2,7 @@
 
 import { useState, useMemo ,useEffect} from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Filter, X, Plus, Minus, Search, TrendingUp, Zap, DollarSign, Sun, Moon, GitCompare } from "lucide-react"
+import { Filter, X, Plus, Minus, Search, TrendingUp, Zap, DollarSign, Sun, Moon, GitCompare, ArrowUp, ArrowDown, BarChart3, Rabbit, Car, Turtle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -19,12 +19,13 @@ import {GetChains, BlockchainData} from './api/fetch-chains';
 
 
 type FilterState = {
-  speed: string[]
-  tvl: string[]
-  performance: string[]
+  sortBy: 'tps' | 'tvl' | 'marketcap' | null
+  sortOrder: 'asc' | 'desc' | null
   search: string
   count: number
 }
+
+const TOTAL_COUNT = 50;
 
 export default function BlockchainSpace() {
   const [activeTab, setActiveTab] = useState("noob")
@@ -32,11 +33,10 @@ export default function BlockchainSpace() {
   const { theme, toggleTheme } = useTheme()
   const [blockchainData, setBlockchainData] = useState<BlockchainData[]>([])
   const [filters, setFilters] = useState<FilterState>({
-    speed: [],
-    tvl: [],
-    performance: [],
+    sortBy: null,
+    sortOrder: null,
     search: "",
-    count: 50,
+    count: TOTAL_COUNT,
   })
 
   const [showCompareModal, setShowCompareModal] = useState(false)
@@ -89,64 +89,100 @@ export default function BlockchainSpace() {
       )
     }
 
-    // Speed filters
-    if (filters.speed.length > 0) {
-      filtered = filtered.filter((blockchain) => {
-        if (filters.speed.includes("fast") && blockchain.tps > 1000) return true
-        if (filters.speed.includes("slow") && blockchain.tps <= 1000) return true
-        return false
-      })
-    }
-
-    // TVL filters
-    if (filters.tvl.length > 0) {
-      filtered = filtered.filter((blockchain) => {
-        if (filters.tvl.includes("high") && blockchain.tvl > 10) return true
-        if (filters.tvl.includes("low") && blockchain.tvl <= 10) return true
-        return false
-      })
-    }
-
-    // Performance filters
-    if (filters.performance.length > 0) {
-      filtered = filtered.filter((blockchain:any) => {
-        if (filters.performance.includes("high-tps") && blockchain.tps > 5000) return true
-        if (filters.performance.includes("high-tvl") && blockchain.tvl > 50) return true
-        return false
+    // Sorting logic
+    if (filters.sortBy && filters.sortOrder) {
+      filtered.sort((a, b) => {
+        let aValue: number, bValue: number
+        
+        switch (filters.sortBy) {
+          case 'tps':
+            aValue = a.tps || 0
+            bValue = b.tps || 0
+            break
+          case 'tvl':
+            aValue = a.tvl || 0
+            bValue = b.tvl || 0
+            break
+          case 'marketcap':
+            aValue = a?.marketCap || 0
+            bValue = b?.marketCap || 0
+            break
+          default:
+            return 0
+        }
+        
+        return filters.sortOrder === 'desc' ? bValue - aValue : aValue - bValue
       })
     }
 
     return filtered.slice(0, filters.count)
-  }, [filters,blockchainData])
+  }, [filters, blockchainData])
 
   if (isLoading) {
     return <LoadingScreen />
   }
 
-  const toggleFilter = (category: keyof FilterState, value: string) => {
-    // Only allow toggling for array-type categories
-    if (["speed", "tvl", "performance"].includes(category)) {
-      setFilters((prev) => {
-        const arr = prev[category] as string[]
-        return {
-          ...prev,
-          [category]: arr.includes(value)
-            ? arr.filter((item: string) => item !== value)
-            : [...arr, value],
-        }
-      })
-    }
+  const setSorting = (sortBy: 'tps' | 'tvl' | 'marketcap', sortOrder: 'asc' | 'desc') => {
+    setFilters((prev) => ({
+      ...prev,
+      sortBy: prev.sortBy === sortBy && prev.sortOrder === sortOrder ? null : sortBy,
+      sortOrder: prev.sortBy === sortBy && prev.sortOrder === sortOrder ? null : sortOrder,
+    }))
   }
 
   const clearFilters = () => {
     setFilters({
-      speed: [],
-      tvl: [],
-      performance: [],
+      sortBy: null,
+      sortOrder: null,
       search: "",
-      count: 20,
+      count: TOTAL_COUNT,
     })
   }
+
+  // Animated icon components
+  const AnimatedRabbit = ({ isActive }: { isActive: boolean }) => (
+    <motion.div
+      animate={{
+        x: isActive ? [0, 5, 0] : 0,
+        rotate: isActive ? [0, -5, 5, 0] : 0,
+      }}
+      transition={{
+        duration: 0.6,
+        repeat: isActive ? Infinity : 0,
+        repeatType: "loop",
+      }}
+    >
+      <Rabbit className="w-4 h-4" />
+    </motion.div>
+  )
+
+  const AnimatedTurtle = ({ isActive }: { isActive: boolean }) => (
+    <motion.div
+      animate={{
+        x: isActive ? [0, 2, 0] : 0,
+        y: isActive ? [0, -1, 0] : 0,
+      }}
+      transition={{
+        duration: 2,
+        repeat: isActive ? Infinity : 0,
+        repeatType: "loop",
+        ease: "easeInOut",
+      }}
+    >
+      <motion.div
+        animate={{
+          rotate: isActive ? [0, 2, -2, 0] : 0,
+        }}
+        transition={{
+          duration: 1.5,
+          repeat: isActive ? Infinity : 0,
+          repeatType: "loop",
+        }}
+      >
+      <Turtle className="w-4 h-4" />
+      </motion.div>
+    </motion.div>
+  )
 
   const getIdColor = () => {
     return "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20"
@@ -179,6 +215,7 @@ export default function BlockchainSpace() {
           onClose={() => setShowCompareModal(false)}
           onCompare={handleCompare}
           selectedChains={selectedChains}
+          blockchainData={blockchainData}
         />
       </div>
     )
@@ -256,12 +293,16 @@ export default function BlockchainSpace() {
             <AnimatePresence>
               {filteredBlockchains.map((blockchain, index) => (
                 <motion.div
-                  key={index+1}
+                  key={blockchain?.name || blockchain?.id || `blockchain-${index}`}
                   layout
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -50 }}
-                  transition={{ delay: index * 0.03 }}
+                  transition={{ 
+                    layout: { duration: 0.5, ease: "easeInOut" },
+                    opacity: { duration: 0.3 },
+                    y: { duration: 0.3, delay: index * 0.02 }
+                  }}
                   whileHover={{ scale: 1.02, y: -2 }}
                   className="group relative"
                 >
@@ -352,17 +393,7 @@ export default function BlockchainSpace() {
                 </div>
 
                 {/* Theme Toggle */}
-                <div className="mb-6">
-                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Theme</h3>
-                  <Button
-                    onClick={toggleTheme}
-                    variant="outline"
-                    className="w-full justify-start bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    {theme === "dark" ? <Sun className="w-4 h-4 mr-2" /> : <Moon className="w-4 h-4 mr-2" />}
-                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
-                  </Button>
-                </div>
+                  <AnimatedThemeToggle theme={theme} toggleTheme={toggleTheme} />
 
                 {/* Blockchain Count */}
                 <div className="mb-6">
@@ -381,8 +412,8 @@ export default function BlockchainSpace() {
                     <Slider
                       value={[filters.count]}
                       onValueChange={([value]) => setFilters((prev) => ({ ...prev, count: value }))}
-                      max={40}
-                      min={10}
+                      max={50}
+                      min={5}
                       step={5}
                       className="flex-1"
                     />
@@ -397,92 +428,163 @@ export default function BlockchainSpace() {
                   </div>
                 </div>
 
-                {/* Filter Categories */}
+                {/* Sort Categories */}
                 <div className="space-y-6">
-                  {/* Speed Filters */}
+                  {/* TPS Sorting */}
                   <div>
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Speed</h3>
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <Zap className="w-4 h-4" />
+                      Speed (TPS)
+                    </h3>
                     <div className="space-y-2">
-                      {[
-                        { value: "fast", label: "Fast (>1000 TPS)" },
-                        { value: "slow", label: "Slow (≤1000 TPS)" },
-                      ].map((option) => (
+                      <motion.div
+                        whileHover={{ scale: 1.02, x: 2 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      >
                         <Button
-                          key={option.value}
-                          variant={filters.speed.includes(option.value) ? "default" : "outline"}
+                          variant={filters.sortBy === 'tps' && filters.sortOrder === 'desc' ? "default" : "outline"}
                           size="sm"
-                          onClick={() => toggleFilter("speed", option.value)}
-                          className={`w-full justify-start ${
-                            filters.speed.includes(option.value)
+                          onClick={() => setSorting('tps', 'desc')}
+                          className={`w-full justify-start gap-2 ${
+                            filters.sortBy === 'tps' && filters.sortOrder === 'desc'
                               ? "bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
                               : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                           }`}
                         >
-                          {option.label}
+                          <AnimatedRabbit isActive={filters.sortBy === 'tps' && filters.sortOrder === 'desc'} />
+                          Fastest
                         </Button>
-                      ))}
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.02, x: -1 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      >
+                        <Button
+                          variant={filters.sortBy === 'tps' && filters.sortOrder === 'asc' ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSorting('tps', 'asc')}
+                          className={`w-full justify-start gap-2 ${
+                            filters.sortBy === 'tps' && filters.sortOrder === 'asc'
+                              ? "bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                              : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                          }`}
+                        >
+                          <AnimatedTurtle isActive={filters.sortBy === 'tps' && filters.sortOrder === 'asc'} />
+                          Slowest
+                        </Button>
+                      </motion.div>
                     </div>
                   </div>
 
-                  {/* TVL Filters */}
+                  {/* TVL Sorting */}
                   <div>
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">TVL</h3>
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      Total Value Locked
+                    </h3>
                     <div className="space-y-2">
-                      {[
-                        { value: "high", label: "High (>$10B)" },
-                        { value: "low", label: "Low (≤$10B)" },
-                      ].map((option) => (
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
                         <Button
-                          key={option.value}
-                          variant={filters.tvl.includes(option.value) ? "default" : "outline"}
+                          variant={filters.sortBy === 'tvl' && filters.sortOrder === 'desc' ? "default" : "outline"}
                           size="sm"
-                          onClick={() => toggleFilter("tvl", option.value)}
-                          className={`w-full justify-start ${
-                            filters.tvl.includes(option.value)
+                          onClick={() => setSorting('tvl', 'desc')}
+                          className={`w-full justify-start gap-2 ${
+                            filters.sortBy === 'tvl' && filters.sortOrder === 'desc'
                               ? "bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
                               : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                           }`}
                         >
-                          {option.label}
+                          <AnimatedRabbit isActive={filters.sortBy === 'tvl' && filters.sortOrder === 'desc'} />
+                          Highest
                         </Button>
-                      ))}
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Button
+                          variant={filters.sortBy === 'tvl' && filters.sortOrder === 'asc' ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSorting('tvl', 'asc')}
+                          className={`w-full justify-start gap-2 ${
+                            filters.sortBy === 'tvl' && filters.sortOrder === 'asc'
+                              ? "bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                              : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                          }`}
+                        >
+                          <AnimatedTurtle isActive={filters.sortBy === 'tvl' && filters.sortOrder === 'asc'} />
+                          Lowest
+                        </Button>
+                      </motion.div>
                     </div>
                   </div>
 
-                  {/* Performance Filters */}
+                  {/* Market Cap Sorting */}
                   <div>
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Performance</h3>
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      Market Cap
+                    </h3>
                     <div className="space-y-2">
-                      {[
-                        { value: "high-tps", label: "High TPS (>5000)" },
-                        { value: "high-tvl", label: "High TVL (>$50B)" },
-                      ].map((option) => (
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
                         <Button
-                          key={option.value}
-                          variant={filters.performance.includes(option.value) ? "default" : "outline"}
+                          variant={filters.sortBy === 'marketcap' && filters.sortOrder === 'desc' ? "default" : "outline"}
                           size="sm"
-                          onClick={() => toggleFilter("performance", option.value)}
-                          className={`w-full justify-start ${
-                            filters.performance.includes(option.value)
+                          onClick={() => setSorting('marketcap', 'desc')}
+                          className={`w-full justify-start gap-2 ${
+                            filters.sortBy === 'marketcap' && filters.sortOrder === 'desc'
                               ? "bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
                               : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                           }`}
                         >
-                          {option.label}
+                          <AnimatedRabbit isActive={filters.sortBy === 'marketcap' && filters.sortOrder === 'desc'} />
+                          Highest
                         </Button>
-                      ))}
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Button
+                          variant={filters.sortBy === 'marketcap' && filters.sortOrder === 'asc' ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSorting('marketcap', 'asc')}
+                          className={`w-full justify-start gap-2 ${
+                            filters.sortBy === 'marketcap' && filters.sortOrder === 'asc'
+                              ? "bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                              : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                          }`}
+                        >
+                          <AnimatedTurtle isActive={filters.sortBy === 'marketcap' && filters.sortOrder === 'asc'} />
+                          Lowest
+                        </Button>
+                      </motion.div>
                     </div>
                   </div>
                 </div>
 
                 {/* Clear Filters */}
-                <Button
-                  onClick={clearFilters}
-                  variant="outline"
-                  className="w-full mt-6 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  Clear All Filters
-                </Button>
+                  <Button
+                    onClick={clearFilters}
+                    variant="outline"
+                    className="w-full mt-6 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Clear All Filters
+                  </Button>
+                </motion.div>
               </div>
             </motion.div>
           </>
@@ -538,6 +640,7 @@ export default function BlockchainSpace() {
         onClose={() => setShowCompareModal(false)}
         onCompare={handleCompare}
         selectedChains={selectedChains}
+        blockchainData={blockchainData}
       />
 
       {/* Footer */}
@@ -548,3 +651,34 @@ export default function BlockchainSpace() {
     </div>
   )
 }
+
+
+const AnimatedThemeToggle = ({ theme, toggleTheme }:any) => {
+  const isDark = theme === "dark";
+
+  return (
+  <div className="mb-6 flex items-center justify-between">
+      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Theme</h3>
+
+      <div
+        onClick={toggleTheme}
+        className="w-16 h-8 flex items-center rounded-full px-1 cursor-pointer bg-gray-200 dark:bg-gray-700 relative"
+      >
+        {/* Thumb */}
+        <motion.div
+          layout
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          className="w-6 h-6 rounded-full bg-white shadow-md z-10"
+          style={{ position: "absolute", left: isDark ? "calc(100% - 28px)" : "4px" }}
+        />
+
+        {/* Icons */}
+        <div className="w-full flex justify-between items-center z-20 px-1">
+          <Sun className="w-4 h-4 text-yellow-500" />
+          <Moon className="w-4 h-4 text-gray-800 dark:text-black" />
+        </div>
+      </div>
+    </div>
+
+  );
+};

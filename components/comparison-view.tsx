@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Copy, TrendingUp, DollarSign, Zap, Shield, BarChart3, 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import type { blockchainData } from "@/data/blockchains"
+import toast from "react-hot-toast"
 
 interface ComparisonViewProps {
   selectedChains: any
@@ -27,19 +27,28 @@ export function ComparisonView({ selectedChains, onAddMore, onExit }: Comparison
     }
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
+  const copyToClipboard = (text: string, type: 'RPC' | 'WSS' = 'RPC') => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success(`${type} URL copied to clipboard!`, {
+        icon: '📋',
+        duration: 3000,
+      })
+    }).catch(() => {
+      toast.error(`Failed to copy ${type} URL`, {
+        icon: '❌',
+        duration: 3000,
+      })
+    })
   }
 
+  console.log('selected chains : ',selectedChains)
+
   const metrics = [
-    { key: "marketCap", label: "Market Cap", icon: DollarSign, color: "text-green-500", suffix: "B" },
-    { key: "tvl", label: "TVL", icon: BarChart3, color: "text-blue-500", suffix: "B" },
-    { key: "totalStakeVolume", label: "Staked", icon: Shield, color: "text-purple-500", suffix: "B" },
+    { key: "marketCap", label: "Market Cap", icon: DollarSign, color: "text-green-500",prefix: "$", suffix: "B" },
+    { key: "tvl", label: "TVL", icon: BarChart3, color: "text-blue-500", prefix: "$", suffix: "B" },
     { key: "tps", label: "TPS", icon: TrendingUp, color: "text-orange-500", suffix: "" },
-    { key: "gasFee", label: "Gas Fee", icon: Zap, color: "text-red-500", prefix: "$" },
-    { key: "blockTime", label: "Block Time", icon: Globe, color: "text-cyan-500", suffix: "s" },
     { key: "activeAddresses", label: "Active Addresses", icon: Users, color: "text-pink-500", suffix: "K" },
-    { key: "dexVolume24h", label: "24h DEX Volume", icon: BarChart3, color: "text-indigo-500", suffix: "M" },
+    { key: "dexVolume24h", label: "24h DEX Volume", icon: BarChart3, color: "text-indigo-500",prefix: "$", suffix: "M" },
   ]
 
   return (
@@ -90,8 +99,11 @@ export function ComparisonView({ selectedChains, onAddMore, onExit }: Comparison
             <div></div>
             {selectedChains.map((chain:any) => (
               <Card key={chain.id} className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl mb-2">{chain.logo}</div>
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                   <img src={chain.logo} alt={chain.name} className="w-20 h-20" onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }} />
                   <h3 className="font-bold text-black dark:text-white">{chain.name}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{chain.symbol}</p>
                   <Badge className={`${getSecurityColor(chain.security)} border-0 mt-2`}>{chain.security}</Badge>
@@ -188,13 +200,14 @@ export function ComparisonView({ selectedChains, onAddMore, onExit }: Comparison
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-600 dark:text-gray-400 truncate mr-2">
-                        {chain.rpcEndpoint}
+                        {chain.rpc_node}
                       </span>
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => copyToClipboard(chain.rpcEndpoint)}
-                        className="p-1 h-6 w-6"
+                        onClick={() => copyToClipboard(chain.rpc_node, 'RPC')}
+                        className="p-1 h-6 w-6 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+                        title="Copy RPC URL"
                       >
                         <Copy className="w-3 h-3" />
                       </Button>
@@ -224,13 +237,14 @@ export function ComparisonView({ selectedChains, onAddMore, onExit }: Comparison
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-600 dark:text-gray-400 truncate mr-2">
-                        {chain.wssEndpoint}
+                        {chain.wss_rpc_node}
                       </span>
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => copyToClipboard(chain.wssEndpoint)}
-                        className="p-1 h-6 w-6"
+                        onClick={() => copyToClipboard(chain.wss_rpc_node, 'WSS')}
+                        className="p-1 h-6 w-6 hover:bg-green-100 dark:hover:bg-green-900/20"
+                        title="Copy WSS URL"
                       >
                         <Copy className="w-3 h-3" />
                       </Button>

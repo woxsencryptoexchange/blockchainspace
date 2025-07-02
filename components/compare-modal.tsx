@@ -1,35 +1,41 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Plus, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { blockchainData } from "@/data/blockchains"
+import type { BlockchainData } from "@/app/api/fetch-chains"
 
 interface CompareModalProps {
   isOpen: boolean
   onClose: () => void
-  onCompare: (selectedChains: typeof blockchainData) => void
-  selectedChains: any
+  onCompare: (selectedChains: BlockchainData[]) => void
+  selectedChains: BlockchainData[]
+  blockchainData: BlockchainData[]
 }
 
-export function CompareModal({ isOpen, onClose, onCompare, selectedChains }: CompareModalProps) {
+export function CompareModal({ isOpen, onClose, onCompare, selectedChains, blockchainData }: CompareModalProps) {
   const [searchTerm, setSearchTerm] = useState("")
-  const [selected, setSelected] = useState<typeof blockchainData>(selectedChains)
+  const [selected, setSelected] = useState<BlockchainData[]>(selectedChains)
 
-  const filteredChains = blockchainData.filter(
-    (chain) =>
+  // Sync selected state when selectedChains prop changes
+  useEffect(() => {
+    setSelected(selectedChains)
+  }, [selectedChains])
+
+  const filteredChains = blockchainData?.filter(
+    (chain: BlockchainData) =>
       chain.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       chain.symbol.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const toggleSelection = (chain: (typeof blockchainData)[0]) => {
-    setSelected((prev) => {
-      const isSelected = prev.some((c) => c.id === chain.id)
+  const toggleSelection = (chain: BlockchainData) => {
+    setSelected((prev: BlockchainData[]) => {
+      const isSelected = prev.some((c: BlockchainData) => c.id === chain.id)
       if (isSelected) {
-        return prev.filter((c) => c.id !== chain.id)
+        return prev.filter((c: BlockchainData) => c.id !== chain.id)
       } else if (prev.length < 4) {
         return [...prev, chain]
       }
@@ -93,14 +99,15 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains }: Com
               <div className="p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selected for comparison:</p>
                 <div className="flex flex-wrap gap-2">
-                  {selected.map((chain) => (
+                  {selected.map((chain: BlockchainData) => (
                     <Badge
                       key={chain.id}
                       variant="outline"
-                      className="bg-white dark:bg-black border-gray-200 dark:border-gray-800 text-black dark:text-white"
+                      className="bg-white py-2 dark:bg-black border-gray-200 dark:border-gray-800 text-black dark:text-white flex items-center gap-2"
                     >
-                      {chain.logo} {chain.name}
-                      <button onClick={() => toggleSelection(chain)} className="ml-2 hover:text-red-500">
+                      <img src={chain.logo} alt={chain.name} className="w-4 h-4" />
+                      {chain.name}
+                      <button onClick={() => toggleSelection(chain)} className="ml-1 hover:text-red-500">
                         <X className="w-3 h-3" />
                       </button>
                     </Badge>
@@ -112,8 +119,8 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains }: Com
             {/* Chain List */}
             <div className="flex-1 overflow-y-auto p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredChains.map((chain) => {
-                  const isSelected = selected.some((c) => c.id === chain.id)
+                {filteredChains.map((chain: BlockchainData) => {
+                  const isSelected = selected.some((c: BlockchainData) => c.id === chain.id)
                   const canSelect = selected.length < 4 || isSelected
 
                   return (
@@ -129,9 +136,9 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains }: Com
                       }`}
                       onClick={() => canSelect && toggleSelection(chain)}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-3">
-                          <div className="text-xl">{chain.logo}</div>
+                          <img src={chain.logo} alt={chain.name} className="w-8 h-8 rounded-full" />
                           <div>
                             <h3 className="font-semibold text-black dark:text-white">{chain.name}</h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">{chain.symbol}</p>
@@ -142,6 +149,22 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains }: Com
                         ) : canSelect ? (
                           <Plus className="w-5 h-5 text-gray-400" />
                         ) : null}
+                      </div>
+                      
+                      {/* Additional metrics for quick preview */}
+                      <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex justify-between">
+                          <span>Market Cap:</span>
+                          <span>${chain.marketCap}B</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>TVL:</span>
+                          <span>${chain.tvl}B</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>TPS:</span>
+                          <span>{chain.tps.toLocaleString()}</span>
+                        </div>
                       </div>
                     </motion.div>
                   )
