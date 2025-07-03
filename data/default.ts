@@ -107,9 +107,9 @@ export const rpcData: { [key: string]: [string, string] } = {
     "wss://sei-ws.mainnet.sei.io"
   ],
   "sonic-3": ["https://sonic-rpc.publicnode.com:443", "wss://sonic-rpc.publicnode.com:443"],
-  "bsquared-network": ["", ""],
-  coredaoorg: ["", ""],
-  "crypto-com-chain": ["", ""],
+  "bsquared-network": ["https://mainnet.b2-rpc.com", ""],
+  coredaoorg: ["https://rpc.ankr.com/core", "wss://core.drpc.org"],
+  "crypto-com-chain": ["https://cronos-evm-rpc.publicnode.com", "wss://cronos.drpc.org"],
   hemis: ["", ""],
   optimism: [
     "https://mainnet.optimism.io",

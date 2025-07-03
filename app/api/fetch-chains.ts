@@ -19,6 +19,7 @@ export interface BlockchainData {
   sentimentVotesDown: number;
   sentimentPercentage: number;
   circulatingSupply: number;
+  error?:string;
 }
 
 export async function GetChains() {
@@ -93,6 +94,19 @@ export async function GetChains() {
         blockchainData[i].gecko_id = "katana-inu";
         blockchainData[i].symbol = "kata";
       }
+
+      if(blockchainData[i].gecko_id == 'hyperliquid'){
+        blockchainData[i].id = 999;
+      }
+
+      if(blockchainData[i].gecko_id == 'coredaoorg'){
+        blockchainData[i].id = 1116;
+      }
+
+      if(blockchainData[i].gecko_id == 'sei-network'){
+        blockchainData[i].id = 1329;
+      }
+
     }
 
     // Filter out chains without valid gecko_id

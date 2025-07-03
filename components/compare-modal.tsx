@@ -14,7 +14,7 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains, block
   const [selected, setSelected] = useState<BlockchainData[]>(selectedChains)
 
   // Sync selected state when selectedChains prop changes
-  useEffect(() => {
+  useEffect(() => {  
     setSelected(selectedChains)
   }, [selectedChains])
 
@@ -112,7 +112,7 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains, block
             {/* Chain List */}
             <div className="flex-1 overflow-y-auto p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredChains.map((chain: BlockchainData,index:number) => {
+                {filteredChains?.map((chain: BlockchainData,index:number) => {
                   const isSelected = selected.some((c: BlockchainData) => c.id === chain.id)
                   const canSelect = selected.length < 4 || isSelected
 

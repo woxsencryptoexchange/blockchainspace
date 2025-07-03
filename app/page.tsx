@@ -16,6 +16,7 @@ import { ChatWidget } from "@/components/chat-widget"
 import { LoadingScreen } from "@/components/loading-screen"
 import { useLoading } from "@/hooks/use-loading"
 import {GetChains, type BlockchainData} from './api/fetch-chains';
+import toast from 'react-hot-toast';
 
 
 type FilterState = {
@@ -31,7 +32,7 @@ export default function BlockchainSpace() {
   const [activeTab, setActiveTab] = useState("noob")
   const [showFilters, setShowFilters] = useState(false)
   const { theme, toggleTheme } = useTheme()
-  const [blockchainData, setBlockchainData] = useState<BlockchainData[]>([])
+  const [blockchainData, setBlockchainData] = useState<BlockchainData[] | any>([])
   const [isLoadingData, setIsLoadingData] = useState(true)
   const [filters, setFilters] = useState<FilterState>({
     sortBy: null,
@@ -63,7 +64,7 @@ export default function BlockchainSpace() {
 
         const response0:any = await handleFetchChains();
 
-        if(response0){
+        if(!response0.error){
           setBlockchainData(response0);
           setIsLoadingData(false)
           return;
@@ -84,6 +85,13 @@ export default function BlockchainSpace() {
   }, [])
 
   const filteredBlockchains = useMemo(() => {
+
+    if(!blockchainData) return [];
+    if(blockchainData?.error) {
+        toast.error(blockchainData.error);
+        return [];
+    }
+
     let filtered = [...blockchainData]
 
     // Search filter
@@ -217,12 +225,12 @@ export default function BlockchainSpace() {
           </div>
         </div>
         <CompareModal
-          isOpen={showCompareModal}
-          onClose={() => setShowCompareModal(false)}
-          onCompare={handleCompare}
-          selectedChains={selectedChains}
-          blockchainData={blockchainData}
-        />
+        isOpen={showCompareModal}
+        onClose={() => setShowCompareModal(false)}
+        onCompare={handleCompare}
+        selectedChains={selectedChains}
+        blockchainData={blockchainData}
+      />
       </div>
     )
   }
@@ -298,7 +306,7 @@ export default function BlockchainSpace() {
               </div>
             ) : (
               <p className="text-gray-600 dark:text-gray-400">
-                Showing {filteredBlockchains.length} of {blockchainData.length} blockchains
+                Showing {filteredBlockchains?.length} of {blockchainData?.length} blockchains
               </p>
             )}
           </motion.div>
@@ -379,7 +387,7 @@ export default function BlockchainSpace() {
                           </div>
                         </div>
                         <Badge className={`${getIdColor()} border-0 text-xs px-2 py-1`}>
-                          ID: {blockchain?.id}
+                          Chain ID: {blockchain?.id}
                         </Badge>
                       </div>
 
