@@ -5,11 +5,20 @@ export interface BlockchainData {
   name: string;
   logo: string;
   symbol: string;
+  gecko_id?: string;
   marketCap: number;
   tvl: number;
   tps: number;
-  rpc_node:string;
-  wss_rpc_node:string;
+  rpc_node: string;
+  wss_rpc_node: string;
+  currentPrice: number;
+  priceChange24h: number;
+  volume24h: number;
+  sentiment: string;
+  sentimentVotesUp: number;
+  sentimentVotesDown: number;
+  sentimentPercentage: number;
+  circulatingSupply: number;
 }
 
 export async function GetChains() {
@@ -39,8 +48,16 @@ export async function GetChains() {
       tvl: chain.tvl,
       marketCap: 0,
       tps: 0,
-      rpc_node:"",
-      wss_rpc_noe:""
+      rpc_node: "",
+      wss_rpc_node: "",
+      currentPrice: 0,
+      priceChange24h: 0,
+      volume24h: 0,
+      sentiment: "neutral",
+      sentimentVotesUp: 0,
+      sentimentVotesDown: 0,
+      sentimentPercentage: 0,
+      circulatingSupply: 0
     }));
 
     // Handle special gecko_id cases
@@ -102,32 +119,48 @@ export async function GetChains() {
       .join(",");
     try {
       const marketRes = await fetch(
-        `https://api.coingecko.com/api/v3/coins/markets?ids=${geckoIds}&vs_currency=usd&order=market_cap_desc&per_page=250&page=1`
+        `https://api.coingecko.com/api/v3/coins/markets?ids=${geckoIds}&vs_currency=usd&order=market_cap_desc&per_page=250&page=1&price_change_percentage=24h`
       );
       if (marketRes.ok) {
         const marketData = await marketRes.json();
 
-        // Update market cap data
+        // Update comprehensive market data
         blockchainData.forEach((chain: any) => {
           const marketInfo = marketData.find(
             (market: any) => market.id === chain.gecko_id
           );
           if (marketInfo) {
-
-            // if(chain.id == 8453){
-            //   console.log(marketInfo)
-            // }
-
+            // Market Cap (in billions)
             chain.marketCap = marketInfo.market_cap
               ? Math.round((marketInfo.market_cap / 1000000000) * 100) / 100
-              : Math.round((chain.tvl / 1000000000) * 100) / 100; // Convert to billions 
+              : Math.round((chain.tvl / 1000000000) * 100) / 100;
+              
+            // Current Price
+            chain.currentPrice = marketInfo.current_price || 0;
+            
+            // 24h Price Change Percentage
+            chain.priceChange24h = marketInfo.price_change_percentage_24h || 0;
+            
+            // 24h Volume (in millions)
+            chain.volume24h = marketInfo.total_volume 
+              ? Math.round((marketInfo.total_volume / 1000000) * 100) / 100 
+              : 0;
+              
+            // Circulating Supply (in millions)
+            chain.circulatingSupply = marketInfo.circulating_supply 
+              ? Math.round((marketInfo.circulating_supply / 1000000) * 100) / 100 
+              : 0;
+            
+            // Logo
             chain.logo = marketInfo.image ? marketInfo.image : chain.logo;
           }
         });
       }
     } catch (error) {
-      console.warn("Failed to fetch market cap data:", error);
+      console.warn("Failed to fetch market data:", error);
     }
+
+    // Sentiment data will be fetched on-demand in comparison view
 
     // Update TPS data
     blockchainData.forEach((chain: any) => {
@@ -138,17 +171,25 @@ export async function GetChains() {
 
     // Create final clean data structure
     const finalData: BlockchainData[] = blockchainData.map(
-
       (chain: any, index: number) => ({
         id: chain.id || index + 1,
         name: chain.name,
         logo: chain.logo,
         symbol: chain.symbol || "N/A",
+        gecko_id: chain.gecko_id,
         marketCap: chain.marketCap,
         tvl: Math.round((chain.tvl / 1000000000) * 100) / 100, // Convert to billions
         tps: chain.tps,
-        rpc_node:chain.rpc_node,
-        wss_rpc_node:chain.wss_rpc_node
+        rpc_node: chain.rpc_node,
+        wss_rpc_node: chain.wss_rpc_node,
+        currentPrice: chain.currentPrice,
+        priceChange24h: Math.round(chain.priceChange24h * 100) / 100, // Round to 2 decimal places
+        volume24h: chain.volume24h,
+        sentiment: chain.sentiment,
+        sentimentVotesUp: chain.sentimentVotesUp,
+        sentimentVotesDown: chain.sentimentVotesDown,
+        sentimentPercentage: chain.sentimentPercentage,
+        circulatingSupply: chain.circulatingSupply
       })
     );
 
@@ -164,9 +205,6 @@ export async function GetChains() {
     } catch (error) {
       console.warn("Failed to save data to file:", error);
     }
-
-    console.log('hell data : ',finalData)
-
     return finalData;
   } catch (error) {
     console.error("Error fetching chains:", error);

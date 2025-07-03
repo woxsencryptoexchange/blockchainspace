@@ -8,15 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import type { BlockchainData } from "@/app/api/fetch-chains"
 
-interface CompareModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onCompare: (selectedChains: BlockchainData[]) => void
-  selectedChains: BlockchainData[]
-  blockchainData: BlockchainData[]
-}
 
-export function CompareModal({ isOpen, onClose, onCompare, selectedChains, blockchainData }: CompareModalProps) {
+export function CompareModal({ isOpen, onClose, onCompare, selectedChains, blockchainData }: any) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selected, setSelected] = useState<BlockchainData[]>(selectedChains)
 
@@ -99,9 +92,9 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains, block
               <div className="p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selected for comparison:</p>
                 <div className="flex flex-wrap gap-2">
-                  {selected.map((chain: BlockchainData) => (
+                  {selected.map((chain: BlockchainData,index:number) => (
                     <Badge
-                      key={chain.id}
+                      key={index}
                       variant="outline"
                       className="bg-white py-2 dark:bg-black border-gray-200 dark:border-gray-800 text-black dark:text-white flex items-center gap-2"
                     >
@@ -119,13 +112,13 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains, block
             {/* Chain List */}
             <div className="flex-1 overflow-y-auto p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredChains.map((chain: BlockchainData) => {
+                {filteredChains.map((chain: BlockchainData,index:number) => {
                   const isSelected = selected.some((c: BlockchainData) => c.id === chain.id)
                   const canSelect = selected.length < 4 || isSelected
 
                   return (
                     <motion.div
-                      key={chain.id}
+                      key={index}
                       whileHover={{ scale: canSelect ? 1.02 : 1 }}
                       className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 ${
                         isSelected

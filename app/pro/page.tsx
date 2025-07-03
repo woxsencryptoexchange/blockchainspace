@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo,useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Filter,
@@ -24,7 +24,6 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
 import { useTheme } from "@/contexts/theme-context"
-import { blockchainData } from "@/data/blockchains"
 import { CompareModal } from "@/components/compare-modal"
 import { ComparisonView } from "@/components/comparison-view"
 import Link from "next/link"
@@ -32,6 +31,7 @@ import { Footer } from "@/components/footer"
 import { ChatWidget } from "@/components/chat-widget"
 import { LoadingScreen } from "@/components/loading-screen"
 import { useLoading } from "@/hooks/use-loading"
+import type { BlockchainData } from "../api/fetch-chains"
 
 type FilterState = {
   speed: string[]
@@ -64,6 +64,8 @@ export default function DevPage() {
     search: "",
     count: 20,
   })
+
+  const [blockchainData,setBlockchainData] = useState<BlockchainData[]>([])
 
     const [activeTab, setActiveTab] = useState("pro")
 
@@ -119,8 +121,8 @@ export default function DevPage() {
     // DEX Volume filters
     if (filters.dexVolume.length > 0) {
       filtered = filtered.filter((blockchain) => {
-        if (filters.dexVolume.includes("high") && blockchain.dexVolume24h > 100) return true
-        if (filters.dexVolume.includes("low") && blockchain.dexVolume24h <= 100) return true
+        if (filters.dexVolume.includes("high") && blockchain.volume24h > 100) return true
+        if (filters.dexVolume.includes("low") && blockchain.volume24h <= 100) return true
         return false
       })
     }
@@ -250,6 +252,20 @@ export default function DevPage() {
       </div>
     )
   }
+
+  useEffect(()=>{
+
+    const fetchData = async()=>{
+      const response = await fetch('/api/blockchain-data')
+      if (response.ok) {
+        const data = await response.json()
+        setBlockchainData(data)
+      }
+    }
+
+    fetchData();
+
+  },[])
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">

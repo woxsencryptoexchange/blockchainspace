@@ -15,7 +15,7 @@ import { Footer } from "@/components/footer"
 import { ChatWidget } from "@/components/chat-widget"
 import { LoadingScreen } from "@/components/loading-screen"
 import { useLoading } from "@/hooks/use-loading"
-import {GetChains, BlockchainData} from './api/fetch-chains';
+import {GetChains, type BlockchainData} from './api/fetch-chains';
 
 
 type FilterState = {
@@ -32,6 +32,7 @@ export default function BlockchainSpace() {
   const [showFilters, setShowFilters] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const [blockchainData, setBlockchainData] = useState<BlockchainData[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(true)
   const [filters, setFilters] = useState<FilterState>({
     sortBy: null,
     sortOrder: null,
@@ -58,11 +59,14 @@ export default function BlockchainSpace() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        setIsLoadingData(true)
 
         const response0:any = await handleFetchChains();
 
         if(response0){
-        return setBlockchainData(response0);
+          setBlockchainData(response0);
+          setIsLoadingData(false)
+          return;
         }
 
         const response = await fetch('/api/blockchain-data')
@@ -72,6 +76,8 @@ export default function BlockchainSpace() {
         }
       } catch (error) {
         console.error('Error loading blockchain data:', error)
+      } finally {
+        setIsLoadingData(false)
       }
     }
     loadData()
@@ -283,15 +289,66 @@ export default function BlockchainSpace() {
 
           {/* Results Counter */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mb-6">
-            <p className="text-gray-600 dark:text-gray-400">
-              Showing {filteredBlockchains.length} of {blockchainData.length} blockchains
-            </p>
+            {isLoadingData ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Loading latest live blockchain data...
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-600 dark:text-gray-400">
+                Showing {filteredBlockchains.length} of {blockchainData.length} blockchains
+              </p>
+            )}
           </motion.div>
 
           {/* Blockchain Grid */}
           <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             <AnimatePresence>
-              {filteredBlockchains.map((blockchain, index) => (
+              {isLoadingData ? (
+                // Skeleton Loading Cards
+                Array.from({ length: 20 }).map((_, index) => (
+                  <motion.div
+                    key={`skeleton-${index}`}
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      delay: index * 0.05,
+                      duration: 0.3 
+                    }}
+                    className="group relative"
+                  >
+                    <div className="relative p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                      {/* Header Skeleton */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+                          <div>
+                            <div className="w-16 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1"></div>
+                            <div className="w-8 h-2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                          </div>
+                        </div>
+                        <div className="w-12 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                      </div>
+
+                      {/* Metrics Skeleton */}
+                      <div className="space-y-2">
+                        {Array.from({ length: 3 }).map((_, metricIndex) => (
+                          <div key={metricIndex} className="flex items-center justify-between">
+                            <div className="flex items-center space-x-1">
+                              <div className="w-3 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                              <div className="w-12 h-2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                            </div>
+                            <div className="w-8 h-2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                filteredBlockchains.map((blockchain, index) => (
                 <motion.div
                   key={blockchain?.name || blockchain?.id || `blockchain-${index}`}
                   layout
@@ -355,7 +412,8 @@ export default function BlockchainSpace() {
                     </div>
                   </Link>
                 </motion.div>
-              ))}
+                ))
+              )}
             </AnimatePresence>
           </motion.div>
         </div>
