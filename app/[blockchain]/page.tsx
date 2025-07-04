@@ -3,6 +3,8 @@
 import { motion } from "framer-motion"
 import { ArrowLeft, TrendingUp, DollarSign, Zap, Shield, Users, BarChart3, Globe, Code } from "lucide-react"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,43 +14,299 @@ import { notFound } from "next/navigation"
 import { Footer } from "@/components/footer"
 import { ChatWidget } from "@/components/chat-widget"
 import { LoadingScreen } from "@/components/loading-screen"
-import { useLoading } from "@/hooks/use-loading" // Import useLoading hook
+import { useLoading } from "@/hooks/use-loading"
+import { PriceChart } from "@/components/price-chart"
+
+interface OHLCData {
+  id: string
+  timestamp: number
+  open: { value: number }
+  high: { value: number }
+  low: { value: number }
+  close: { value: number }
+}
 
 export default function BlockchainDetail({ params }: { params: { blockchain: string } }) {
   const { theme } = useTheme()
   const isLoading = useLoading(2000)
+  const searchParams = useSearchParams()
+  const [chartData, setChartData] = useState<OHLCData[]>([])
+  const [isLoadingChart, setIsLoadingChart] = useState(true)
+  const [blockchain, setBlockchain] = useState<any>(null)
+  const [loadingSentiment, setLoadingSentiment] = useState(false)
+  const [blockchainWithSentiment, setBlockchainWithSentiment] = useState<any>(null)
 
-  // Find blockchain by converting URL param back to name
-  const blockchainName = params.blockchain.replace(/-/g, " ")
-  const blockchain = blockchainData.find((b) => b.name.toLowerCase() === blockchainName.toLowerCase())
+  // Get blockchain data from URL params or fallback to local data
+  useEffect(() => {
+    const dataParam = searchParams.get('data')
+    if (dataParam) {
+      try {
+        const blockchainFromParams = JSON.parse(decodeURIComponent(dataParam))
+        setBlockchain(blockchainFromParams)
+      } catch (error) {
+        console.error('Error parsing blockchain data from URL:', error)
+        // Fallback to local data
+        const blockchainName = params.blockchain.replace(/-/g, " ")
+        const fallbackBlockchain = blockchainData.find((b) => b.name.toLowerCase() === blockchainName.toLowerCase())
+        setBlockchain(fallbackBlockchain)
+      }
+    } else {
+      // Fallback to local data
+      const blockchainName = params.blockchain.replace(/-/g, " ")
+      const fallbackBlockchain = blockchainData.find((b) => b.name.toLowerCase() === blockchainName.toLowerCase())
+      setBlockchain(fallbackBlockchain)
+    }
+  }, [params.blockchain, searchParams])
 
-  if (!blockchain) {
-    notFound()
+  // Fetch sentiment data when blockchain changes
+  useEffect(() => {
+    if (blockchain) {
+      fetchSentimentData(blockchain).then(setBlockchainWithSentiment)
+    }
+  }, [blockchain])
+
+  // Function to fetch sentiment data
+  const fetchSentimentData = async (blockchainData: any) => {
+    if (!blockchainData) return blockchainData
+    
+    setLoadingSentiment(true)
+    
+    try {
+      const response = await fetch(`/api/sentiment?symbol=${blockchainData.gecko_id || blockchainData.symbol}`)
+      const sentimentData = await response.json()
+      
+      if (sentimentData && sentimentData.error) {
+        // Handle "Info unavailable" case
+        return {
+          ...blockchainData,
+          sentiment: "neutral",
+          sentimentVotesUp: 0,
+          sentimentVotesDown: 0,
+          sentimentPercentage: 50
+        }
+      } else if (sentimentData && sentimentData.percentage) {
+        // Handle the actual API response format
+        const positivePercentage = sentimentData.percentage.positive || 0
+        const negativePercentage = sentimentData.percentage.negative || 0
+        
+        // Calculate votes from percentages (assuming 100 total votes for display)
+        const totalVotes = 100
+        const bullishVotes = Math.round((positivePercentage / 100) * totalVotes)
+        const bearishVotes = Math.round((negativePercentage / 100) * totalVotes)
+        
+        let sentiment = "neutral"
+        
+        if (positivePercentage >= 70) {
+          sentiment = "bullish"
+        } else if (positivePercentage <= 30) {
+          sentiment = "bearish"
+        } else {
+          sentiment = "neutral"
+        }
+        
+        return {
+          ...blockchainData,
+          sentiment,
+          sentimentVotesUp: bullishVotes,
+          sentimentVotesDown: bearishVotes,
+          sentimentPercentage: Math.round(positivePercentage * 100) / 100
+        }
+      } else if (sentimentData && sentimentData.bullish !== undefined && sentimentData.bearish !== undefined) {
+        // Fallback for old format
+        const bullishVotes = sentimentData.bullish || 0
+        const bearishVotes = sentimentData.bearish || 0
+        const totalVotes = bullishVotes + bearishVotes
+        
+        let sentiment = "neutral"
+        let sentimentPercentage = 50
+        
+        if (totalVotes > 0) {
+          const bullishPercentage = (bullishVotes / totalVotes) * 100
+          sentimentPercentage = Math.round(bullishPercentage * 100) / 100
+          
+          if (bullishPercentage >= 70) {
+            sentiment = "bullish"
+          } else if (bullishPercentage <= 30) {
+            sentiment = "bearish"
+          } else {
+            sentiment = "neutral"
+          }
+        } else {
+          // Fallback to price-based sentiment if no votes
+          const priceChange = blockchainData.priceChange24h
+          if (priceChange > 5) {
+            sentiment = "bullish"
+          } else if (priceChange < -5) {
+            sentiment = "bearish"
+          } else {
+            sentiment = "neutral"
+          }
+        }
+        
+        return {
+          ...blockchainData,
+          sentiment,
+          sentimentVotesUp: bullishVotes,
+          sentimentVotesDown: bearishVotes,
+          sentimentPercentage
+        }
+      }
+      
+      return blockchainData
+    } catch (error) {
+      console.warn(`Failed to fetch sentiment for ${blockchainData.symbol}:`, error)
+      return {
+        ...blockchainData,
+        sentiment: "neutral",
+        sentimentVotesUp: 0,
+        sentimentVotesDown: 0,
+        sentimentPercentage: 50
+      }
+    } finally {
+      setLoadingSentiment(false)
+    }
+  }
+
+  // Function to fetch Uniswap price data
+  const fetchPriceData = async () => {
+    const query = `
+      query TokenPrice($chain: Chain!, $address: String = null, $duration: HistoryDuration!, $fallback: Boolean = false) {
+        token(chain: $chain, address: $address) {
+          id
+          address
+          chain
+          market(currency: USD) {
+            id
+            price {
+              id
+              value
+              __typename
+            }
+            ohlc(duration: $duration) @skip(if: $fallback) {
+              ...CandlestickOHLC
+              __typename
+            }
+            priceHistory(duration: $duration) @include(if: $fallback) {
+              ...PriceHistoryFallback
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+      }
+
+      fragment CandlestickOHLC on TimestampedOhlc {
+        id
+        timestamp
+        open {
+          id
+          value
+          __typename
+        }
+        high {
+          id
+          value
+          __typename
+        }
+        low {
+          id
+          value
+          __typename
+        }
+        close {
+          id
+          value
+          __typename
+        }
+        __typename
+      }
+
+      fragment PriceHistoryFallback on TimestampedAmount {
+        id
+        value
+        timestamp
+        __typename
+      }
+    `
+
+    const variables = {
+      address: null,
+      fallback: false,
+      chain: "ETHEREUM",
+      duration: "DAY"
+    }
+
+    try {
+      setIsLoadingChart(true)
+      console.log('🔄 Fetching Uniswap price data...')
+      
+      const response = await fetch('https://interface.gateway.uniswap.org/v1/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          operationName: 'TokenPrice',
+          query: query,
+          variables: variables
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      console.log('✅ Uniswap API Response:', result)
+      
+      if (result.errors) {
+        console.error('❌ GraphQL Errors:', result.errors)
+        setIsLoadingChart(false)
+        return null
+      }
+
+      // Extract OHLC data
+      if (result.data?.token?.market?.ohlc) {
+        const ohlcData: OHLCData[] = result.data.token.market.ohlc.map((item: any) => ({
+          id: item.id,
+          timestamp: item.timestamp,
+          open: { value: item.open.value },
+          high: { value: item.high.value },
+          low: { value: item.low.value },
+          close: { value: item.close.value }
+        }))
+        
+        setChartData(ohlcData)
+        console.log('📊 Chart data updated:', ohlcData.length, 'data points')
+      }
+      
+      setIsLoadingChart(false)
+      return result
+    } catch (error) {
+      console.error('❌ Uniswap API Error:', error)
+      setIsLoadingChart(false)
+      return null
+    }
+  }
+
+  // Fetch price data on component mount
+  useEffect(() => {
+    fetchPriceData()
+  }, [])
+
+  // Use blockchain with sentiment data if available, otherwise use original blockchain
+  const displayBlockchain = blockchainWithSentiment || blockchain
+
+  if (!displayBlockchain) {
+    return <LoadingScreen />
   }
 
   if (isLoading) {
     return <LoadingScreen />
   }
 
-  const getSecurityColor = (security: string) => {
-    switch (security) {
-      case "High":
-        return "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20"
-      case "Medium":
-        return "text-yellow-600 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-900/20"
-      case "Low":
-        return "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
-      default:
-        return "text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20"
-    }
-  }
 
-  // Mock chart data for demonstration
-  const chartData = Array.from({ length: 30 }, (_, i) => ({
-    day: i + 1,
-    price: Math.random() * 100 + 50,
-    volume: Math.random() * 1000000,
-  }))
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">
@@ -66,16 +324,20 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
               </Button>
             </Link>
             <div className="flex items-center space-x-3">
-              <div className="text-3xl">{blockchain.logo}</div>
+                <img
+                src={displayBlockchain.logo}
+                alt={`${displayBlockchain.name} logo`}
+                className="w-10 h-10 object-contain rounded"
+                />
               <div>
-                <h1 className="text-3xl font-bold text-black dark:text-white">{blockchain.name}</h1>
-                <p className="text-gray-600 dark:text-gray-400">{blockchain.symbol}</p>
+                <h1 className="text-3xl font-bold text-black dark:text-white">{displayBlockchain.name}</h1>
+                <p className="text-gray-600 dark:text-gray-400">{displayBlockchain.symbol}</p>
               </div>
             </div>
           </div>
-          <Badge className={`${getSecurityColor(blockchain.security)} border-0 text-sm px-3 py-1`}>
-            <Shield className="w-4 h-4 mr-1" />
-            {blockchain.security} Security
+          <Badge className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-0 text-sm px-3 py-1">
+            <TrendingUp className="w-4 h-4 mr-1" />
+            {displayBlockchain.priceChange24h > 0 ? '+' : ''}{displayBlockchain.priceChange24h?.toFixed(2)}%
           </Badge>
         </div>
       </motion.header>
@@ -96,7 +358,7 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
                   <DollarSign className="w-4 h-4 text-green-500" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">Market Cap</span>
                 </div>
-                <p className="text-2xl font-bold text-green-500">${blockchain.marketCap}B</p>
+                <p className="text-2xl font-bold text-green-500">${displayBlockchain.marketCap}B</p>
               </CardContent>
             </Card>
 
@@ -106,7 +368,7 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
                   <BarChart3 className="w-4 h-4 text-blue-500" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">TVL</span>
                 </div>
-                <p className="text-2xl font-bold text-blue-500">${blockchain.tvl}B</p>
+                <p className="text-2xl font-bold text-blue-500">${displayBlockchain.tvl}B</p>
               </CardContent>
             </Card>
 
@@ -116,7 +378,7 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
                   <TrendingUp className="w-4 h-4 text-purple-500" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">TPS</span>
                 </div>
-                <p className="text-2xl font-bold text-purple-500">{blockchain.tps.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-purple-500">{displayBlockchain.tps.toLocaleString()}</p>
               </CardContent>
             </Card>
 
@@ -124,9 +386,9 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2 mb-2">
                   <Zap className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Gas Fee</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Current Price</span>
                 </div>
-                <p className="text-2xl font-bold text-orange-500">${blockchain.gasFee}</p>
+                <p className="text-2xl font-bold text-orange-500">${displayBlockchain.currentPrice?.toFixed(4)}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -142,18 +404,21 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
             >
               <Card className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
                 <CardHeader>
-                  <CardTitle className="text-black dark:text-white">Price Chart (30 Days)</CardTitle>
+                  <CardTitle className="text-black dark:text-white">
+                    {displayBlockchain.name} Price Chart (24H)
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64 flex items-end space-x-1">
-                    {chartData.map((data, index) => (
-                      <div
-                        key={index}
-                        className="flex-1 bg-gradient-to-t from-blue-500 to-purple-500 rounded-t opacity-70 hover:opacity-100 transition-opacity"
-                        style={{ height: `${(data.price / 150) * 100}%` }}
-                      />
-                    ))}
-                  </div>
+                  {isLoadingChart ? (
+                    <div className="h-80 flex items-center justify-center">
+                      <div className="text-gray-500 dark:text-gray-400">Loading live price data...</div>
+                    </div>
+                  ) : (
+                    <PriceChart 
+                      data={chartData} 
+                      tokenSymbol={displayBlockchain.symbol}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -165,16 +430,23 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
               transition={{ delay: 0.4 }}
               className="space-y-6"
             >
-              {/* Founder */}
+              {/* Volume & Supply */}
               <Card className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
                 <CardHeader>
                   <CardTitle className="text-black dark:text-white flex items-center">
-                    <Users className="w-5 h-5 mr-2" />
-                    Founder
+                    <BarChart3 className="w-5 h-5 mr-2" />
+                    Volume & Supply
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 dark:text-gray-400">{blockchain.founder}</p>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">24h Volume</span>
+                    <span className="font-medium text-black dark:text-white">${displayBlockchain.volume24h}M</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Circulating Supply</span>
+                    <span className="font-medium text-black dark:text-white">{displayBlockchain.circulatingSupply}M</span>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -188,40 +460,65 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Block Time</span>
-                    <span className="font-medium text-black dark:text-white">{blockchain.blockTime}s</span>
+                    <span className="text-gray-600 dark:text-gray-400">Chain ID</span>
+                    <span className="font-medium text-black dark:text-white">{displayBlockchain.id}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Security Level</span>
-                    <Badge className={`${getSecurityColor(blockchain.security)} border-0`}>{blockchain.security}</Badge>
+                    <span className="text-gray-600 dark:text-gray-400">Gecko ID</span>
+                    <span className="font-medium text-black dark:text-white">{displayBlockchain.gecko_id}</span>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Layer 2 Solutions */}
-              {blockchain.l2s.length > 0 && (
-                <Card className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-black dark:text-white flex items-center">
-                      <Code className="w-5 h-5 mr-2" />
-                      Layer 2 Solutions
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {blockchain.l2s.map((l2, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="bg-white dark:bg-black border-gray-200 dark:border-gray-800 text-black dark:text-white"
-                        >
-                          {l2}
-                        </Badge>
-                      ))}
+              {/* Sentiment Data */}
+              <Card className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                <CardHeader>
+                  <CardTitle className="text-black dark:text-white flex items-center">
+                    <Users className="w-5 h-5 mr-2" />
+                    Market Sentiment
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {loadingSentiment ? (
+                    <div className="flex items-center justify-center p-4">
+                      <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                      <span className="ml-2 text-sm text-gray-500">Loading sentiment...</span>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  ) : (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Sentiment</span>
+                        <Badge className={`border-0 capitalize ${
+                          displayBlockchain.sentiment === 'bullish' 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            : displayBlockchain.sentiment === 'bearish'
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+                        }`}>
+                          {displayBlockchain.sentiment || 'Neutral'}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">👍 Bullish</span>
+                        <span className="font-medium text-green-600">{displayBlockchain.sentimentVotesUp || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">👎 Bearish</span>
+                        <span className="font-medium text-red-600">{displayBlockchain.sentimentVotesDown || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Bullish %</span>
+                        <span className={`font-medium ${
+                          (displayBlockchain.sentimentPercentage || 0) >= 70 ? 'text-green-500' :
+                          (displayBlockchain.sentimentPercentage || 0) <= 30 ? 'text-red-500' : 'text-gray-500'
+                        }`}>
+                          {(displayBlockchain.sentimentPercentage || 0).toFixed(1)}%
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
             </motion.div>
           </div>
 
@@ -239,37 +536,27 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Consensus</p>
-                    <p className="font-medium text-black dark:text-white">
-                      {blockchain.name === "Bitcoin"
-                        ? "Proof of Work"
-                        : blockchain.name === "Ethereum"
-                          ? "Proof of Stake"
-                          : "Proof of Stake"}
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">RPC Node</p>
+                    <p className="font-medium text-black dark:text-white text-xs truncate">
+                      {displayBlockchain.rpc_node ? displayBlockchain.rpc_node.slice(0, 30) + '...' : 'N/A'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Launch Year</p>
-                    <p className="font-medium text-black dark:text-white">
-                      {blockchain.name === "Bitcoin" ? "2009" : blockchain.name === "Ethereum" ? "2015" : "2020"}
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">WSS RPC</p>
+                    <p className="font-medium text-black dark:text-white text-xs truncate">
+                      {displayBlockchain.wss_rpc_node ? displayBlockchain.wss_rpc_node.slice(0, 30) + '...' : 'N/A'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Programming Language</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Sentiment %</p>
                     <p className="font-medium text-black dark:text-white">
-                      {blockchain.name === "Bitcoin"
-                        ? "C++"
-                        : blockchain.name === "Ethereum"
-                          ? "Solidity"
-                          : blockchain.name === "Solana"
-                            ? "Rust"
-                            : "Various"}
+                      {displayBlockchain.sentimentPercentage || 0}%
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Smart Contracts</p>
-                    <p className="font-medium text-black dark:text-white">
-                      {blockchain.name === "Bitcoin" ? "Limited" : "Yes"}
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Price Change</p>
+                    <p className={`font-medium ${displayBlockchain.priceChange24h > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {displayBlockchain.priceChange24h > 0 ? '+' : ''}{displayBlockchain.priceChange24h?.toFixed(2)}%
                     </p>
                   </div>
                 </div>

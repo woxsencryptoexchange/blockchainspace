@@ -371,7 +371,7 @@ export default function BlockchainSpace() {
                   whileHover={{ scale: 1.02, y: -2 }}
                   className="group relative"
                 >
-                  <Link href={`/${blockchain?.name?.toLowerCase().replace(/\s+/g, "-")}`}>
+                  <Link href={`/${blockchain?.name?.toLowerCase().replace(/\s+/g, "-")}?data=${encodeURIComponent(JSON.stringify(blockchain))}`}>
                     <div className="relative p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 cursor-pointer">
                       {/* Header */}
                       <div className="flex items-center justify-between mb-3">
@@ -387,7 +387,7 @@ export default function BlockchainSpace() {
                           </div>
                         </div>
                         <Badge className={`${getIdColor()} border-0 text-xs px-2 py-1`}>
-                          Chain ID: {blockchain?.id}
+                          ID: {blockchain?.id}
                         </Badge>
                       </div>
 
