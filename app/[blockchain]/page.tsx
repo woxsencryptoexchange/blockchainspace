@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { blockchainData } from "@/data/blockchains"
-import { useTheme } from "@/contexts/theme-context"
-import { notFound } from "next/navigation"
 import { Footer } from "@/components/footer"
 import { ChatWidget } from "@/components/chat-widget"
 import { LoadingScreen } from "@/components/loading-screen"
@@ -27,7 +25,6 @@ interface OHLCData {
 }
 
 export default function BlockchainDetail({ params }: { params: { blockchain: string } }) {
-  const { theme } = useTheme()
   const isLoading = useLoading(2000)
   const searchParams = useSearchParams()
   const [chartData, setChartData] = useState<OHLCData[]>([])
@@ -168,135 +165,52 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
   }
 
   // Function to fetch Uniswap price data
-  const fetchPriceData = async () => {
-    const query = `
-      query TokenPrice($chain: Chain!, $address: String = null, $duration: HistoryDuration!, $fallback: Boolean = false) {
-        token(chain: $chain, address: $address) {
-          id
-          address
-          chain
-          market(currency: USD) {
-            id
-            price {
-              id
-              value
-              __typename
-            }
-            ohlc(duration: $duration) @skip(if: $fallback) {
-              ...CandlestickOHLC
-              __typename
-            }
-            priceHistory(duration: $duration) @include(if: $fallback) {
-              ...PriceHistoryFallback
-              __typename
-            }
-            __typename
-          }
-          __typename
-        }
-      }
+ const fetchPriceData = async()=>{
 
-      fragment CandlestickOHLC on TimestampedOhlc {
-        id
-        timestamp
-        open {
-          id
-          value
-          __typename
-        }
-        high {
-          id
-          value
-          __typename
-        }
-        low {
-          id
-          value
-          __typename
-        }
-        close {
-          id
-          value
-          __typename
-        }
-        __typename
-      }
+  try{
 
-      fragment PriceHistoryFallback on TimestampedAmount {
-        id
-        value
-        timestamp
-        __typename
-      }
-    `
+    setIsLoadingChart(true);
 
-    const variables = {
-      address: null,
-      fallback: false,
-      chain: "ETHEREUM",
-      duration: "DAY"
+    const response = await fetch('/api/graph',{
+      method:'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({geckoId:displayBlockchain.gecko_id})
+    })
+
+    if(response.status != 200){
+      setIsLoadingChart(false);
+      return;
     }
 
-    try {
-      setIsLoadingChart(true)
-      console.log('🔄 Fetching Uniswap price data...')
-      
-      const response = await fetch('https://interface.gateway.uniswap.org/v1/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          operationName: 'TokenPrice',
-          query: query,
-          variables: variables
-        })
-      })
+    const data = await response.json();
+    console.log('data  : ',data.chart)
+    setIsLoadingChart(false);
+    setChartData(data.chart); 
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
 
-      const result = await response.json()
-      console.log('✅ Uniswap API Response:', result)
-      
-      if (result.errors) {
-        console.error('❌ GraphQL Errors:', result.errors)
-        setIsLoadingChart(false)
-        return null
-      }
 
-      // Extract OHLC data
-      if (result.data?.token?.market?.ohlc) {
-        const ohlcData: OHLCData[] = result.data.token.market.ohlc.map((item: any) => ({
-          id: item.id,
-          timestamp: item.timestamp,
-          open: { value: item.open.value },
-          high: { value: item.high.value },
-          low: { value: item.low.value },
-          close: { value: item.close.value }
-        }))
-        
-        setChartData(ohlcData)
-        console.log('📊 Chart data updated:', ohlcData.length, 'data points')
-      }
-      
-      setIsLoadingChart(false)
-      return result
-    } catch (error) {
-      console.error('❌ Uniswap API Error:', error)
-      setIsLoadingChart(false)
-      return null
-    }
+  }catch(e){
+    setIsLoadingChart(false);
+    console.log('Error with fetchPriceData : ',e)
   }
 
-  // Fetch price data on component mount
-  useEffect(() => {
-    fetchPriceData()
-  }, [])
+ }
 
   // Use blockchain with sentiment data if available, otherwise use original blockchain
   const displayBlockchain = blockchainWithSentiment || blockchain
+
+
+    // Fetch price data on component mount
+  useEffect(() => {
+
+    if(displayBlockchain?.gecko_id){
+      // console.log('displayBlockchain : ',displayBlockchain)
+      fetchPriceData();
+    }
+    
+  }, [displayBlockchain])
 
   if (!displayBlockchain) {
     return <LoadingScreen />
@@ -305,8 +219,6 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
   if (isLoading) {
     return <LoadingScreen />
   }
-
-
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">
