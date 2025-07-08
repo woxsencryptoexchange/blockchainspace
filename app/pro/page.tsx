@@ -420,7 +420,7 @@ export default function DevPage() {
                   whileHover={{ scale: 1.02, y: -2 }}
                   className="group relative"
                 >
-                  <Link href={`/${blockchain.name?.toLowerCase().replace(/\s+/g, "-")}`} className="h-full">
+                  <Link href={`/${blockchain?.name.toLowerCase().replace(/\s+/g, "-")}?data=${encodeURIComponent(JSON.stringify(blockchain))}`}>
                     <div className="relative p-6 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 cursor-pointer h-full flex flex-col">
                       {/* Header */}
                       <div className="flex items-center justify-between mb-4">
