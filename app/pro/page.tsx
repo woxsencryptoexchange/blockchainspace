@@ -263,11 +263,11 @@ export default function DevPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">
       {/* Header */}
-      <motion.header initial={{ y: -100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="relative z-10 p-6">
+      <motion.header initial={{ y: -100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="relative z-10 p-4 sm:p-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-black dark:text-white">Pro Deep Dive</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">Advanced blockchain technical analysis</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black dark:text-white truncate">Pro Deep Dive</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 sm:mt-2">Advanced blockchain technical analysis</p>
           </div>
 
           {/* Filter Button - Top Right */}
@@ -276,22 +276,22 @@ export default function DevPage() {
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
             onClick={() => setShowFilters(true)}
-            className="p-3 bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-full text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-300"
+            className="p-2 sm:p-3 bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-full text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-300 ml-4 flex-shrink-0"
           >
-            <Filter className="w-5 h-5" />
+            <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
           </motion.button>
         </div>
       </motion.header>
 
       {/* Main Content */}
-      <main className="relative z-10 px-6 pb-32">
+      <main className="relative z-10 px-4 sm:px-6 pb-36 sm:pb-32">
         <div className="max-w-7xl mx-auto">
           {/* Search Bar and Compare Button */}
           <motion.div
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mb-8 flex items-center space-x-4"
+            className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4"
           >
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -304,7 +304,7 @@ export default function DevPage() {
             </div>
             <Button
               onClick={() => setShowCompareModal(true)}
-              className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+              className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 w-full sm:w-auto"
             >
               <GitCompare className="w-4 h-4 mr-2" />
               Compare
@@ -571,42 +571,40 @@ export default function DevPage() {
         </div>
       </main>
 
-        {/* Bottom Navigation */}
-      <motion.nav
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.8 }}
-        className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30"
-      >
-        <div className="flex items-center bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-full p-1 relative overflow-hidden">
-          {/* Sliding Background */}
-          <motion.div
-            className="absolute inset-y-1 bg-black dark:bg-white rounded-full"
-            animate={{
-              x: activeTab === "noob" ? 4 : "calc(100% - 4px)",
-              width: activeTab === "noob" ? "calc(50% - 4px)" : "calc(50% - 4px)",
-            }}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
-          />
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-4 sm:bottom-6 left-0 right-0 z-30 flex justify-center">
+        <motion.nav
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.8 }}
+        >
+          <div className="flex items-center bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-full p-1 relative overflow-hidden">
+            {/* Sliding Background */}
+            <motion.div
+              className="absolute inset-y-1 bg-black dark:bg-white rounded-full"
+              animate={{
+                x: activeTab === "noob" ? 4 : "calc(100% - 4px)",
+                width: activeTab === "noob" ? "calc(50% - 4px)" : "calc(50% - 4px)",
+              }}
+              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            />
 
-          <Link href="/">
+            <Link href="/">
+              <motion.button
+                onClick={() => setActiveTab("noob")}
+                className={`relative z-10 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium transition-colors duration-300 text-sm sm:text-base ${
+                  activeTab === "noob" ? "text-white dark:text-black" : "text-black dark:text-white"
+                }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Noob
+              </motion.button>
+            </Link>
 
-          <motion.button
-            onClick={() => setActiveTab("noob")}
-            className={`relative z-10 px-6 py-3 rounded-full font-medium transition-colors duration-300 ${
-              activeTab === "noob" ? "text-white dark:text-black" : "text-black dark:text-white"
-            }`}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            Noob
-          </motion.button>
-                    </Link>
-
-
-         <motion.button
+            <motion.button
               onClick={() => setActiveTab("pro")}
-              className={`relative z-10 px-9 py-3 rounded-full font-medium transition-colors duration-300 ${
+              className={`relative z-10 px-6 sm:px-6 py-2 sm:py-3 rounded-full font-medium transition-colors duration-300 text-sm sm:text-base ${
                 activeTab === "pro" ? "text-white dark:text-black" : "text-black dark:text-white"
               }`}
               whileHover={{ scale: 1.02 }}
@@ -614,9 +612,9 @@ export default function DevPage() {
             >
               Pro
             </motion.button>
-        
-        </div>
-      </motion.nav>
+          </div>
+        </motion.nav>
+      </div>
 
       {/* Enhanced Filter Sidebar */}
       <AnimatePresence>
@@ -634,9 +632,9 @@ export default function DevPage() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 400, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-80 bg-white dark:bg-black border-l border-gray-200 dark:border-gray-800 z-50 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-full sm:w-80 bg-white dark:bg-black border-l border-gray-200 dark:border-gray-800 z-50 overflow-y-auto"
             >
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold text-black dark:text-white">Advanced Filters</h2>
                   <Button

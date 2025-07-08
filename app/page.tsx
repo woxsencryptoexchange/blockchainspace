@@ -260,7 +260,7 @@ export default function BlockchainSpace() {
       </motion.header>
 
       {/* Main Content */}
-      <main className="relative z-10 px-6 pb-32">
+      <main className="relative z-10 px-4 sm:px-6 pb-36 sm:pb-32">
         <div className="max-w-7xl mx-auto">
           {/* Search Bar and Compare Button */}
           <motion.div
@@ -372,49 +372,49 @@ export default function BlockchainSpace() {
                   className="group relative"
                 >
                   <Link href={`/${blockchain?.name?.toLowerCase().replace(/\s+/g, "-")}?data=${encodeURIComponent(JSON.stringify(blockchain))}`}>
-                    <div className="relative p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 cursor-pointer">
+                    <div className="relative p-2 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 cursor-pointer">
                       {/* Header */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2">
-                          <img src={blockchain.logo} alt={blockchain.name} className="w-6 h-6" onError={(e) => {
+                      <div className="flex items-start justify-between mb-2 sm:mb-3 gap-2">
+                        <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0 flex-1">
+                          <img src={blockchain.logo} alt={blockchain.name} className="w-4 h-4 sm:w-6 sm:h-6 flex-shrink-0" onError={(e) => {
                             e.currentTarget.style.display = 'none';
                             e.currentTarget.nextElementSibling?.classList.remove('hidden');
                           }} />
-                          <div className="text-lg hidden">{blockchain?.name?.charAt(0)}</div>
-                          <div>
-                            <h3 className="font-semibold text-sm text-black dark:text-white">{blockchain?.name}</h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{blockchain?.symbol}</p>
+                          <div className="text-sm sm:text-lg hidden flex-shrink-0">{blockchain?.name?.charAt(0)}</div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-xs sm:text-sm text-black dark:text-white truncate leading-tight" title={blockchain?.name}>{blockchain?.name}</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate leading-tight" title={blockchain?.symbol}>{blockchain?.symbol}</p>
                           </div>
                         </div>
-                        <Badge className={`${getIdColor()} border-0 text-xs px-2 py-1`}>
+                        <Badge className={`${getIdColor()} border-0 text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 whitespace-nowrap flex-shrink-0`} title={`ID: ${blockchain?.id}`}>
                           ID: {blockchain?.id}
                         </Badge>
                       </div>
 
                       {/* Metrics */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-1">
-                            <TrendingUp className="w-3 h-3 text-purple-500" />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">TPS</span>
+                      <div className="space-y-1 sm:space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center space-x-1 min-w-0">
+                            <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-500 flex-shrink-0" />
+                            <span className="text-xs text-gray-600 dark:text-gray-400 truncate">TPS</span>
                           </div>
-                          <span className="text-xs font-medium text-purple-500">{blockchain?.tps?.toLocaleString()}</span>
+                          <span className="text-xs font-medium text-purple-500 flex-shrink-0">{blockchain?.tps?.toLocaleString()}</span>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-1">
-                            <DollarSign className="w-3 h-3 text-green-500" />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Market Cap</span>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center space-x-1 min-w-0">
+                            <DollarSign className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500 flex-shrink-0" />
+                            <span className="text-xs text-gray-600 dark:text-gray-400 truncate">Market Cap</span>
                           </div>
-                          <span className="text-xs font-medium text-green-500">${blockchain?.marketCap}B</span>
+                          <span className="text-xs font-medium text-green-500 flex-shrink-0">${blockchain?.marketCap}B</span>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-1">
-                            <Zap className="w-3 h-3 text-blue-500" />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">TVL</span>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center space-x-1 min-w-0">
+                            <Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-500 flex-shrink-0" />
+                            <span className="text-xs text-gray-600 dark:text-gray-400 truncate">TVL</span>
                           </div>
-                          <span className="text-xs font-medium text-blue-500">${blockchain?.tvl}B</span>
+                          <span className="text-xs font-medium text-blue-500 flex-shrink-0">${blockchain?.tvl}B</span>
                         </div>
                       </div>
                     </div>
@@ -658,13 +658,13 @@ export default function BlockchainSpace() {
       </AnimatePresence>
 
       {/* Bottom Navigation */}
-      <motion.nav
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.8 }}
-        className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30"
-      >
-        <div className="flex items-center bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-full p-1 relative overflow-hidden">
+      <div className="fixed bottom-4 sm:bottom-6 left-0 right-0 z-30 flex justify-center">
+        <motion.nav
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.8 }}
+        >
+          <div className="flex items-center bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-full p-1 sm:p-1 relative overflow-hidden">
           {/* Sliding Background */}
           <motion.div
             className="absolute inset-y-1 bg-black dark:bg-white rounded-full"
@@ -677,7 +677,7 @@ export default function BlockchainSpace() {
 
           <motion.button
             onClick={() => setActiveTab("noob")}
-            className={`relative z-10 px-6 py-3 rounded-full font-medium transition-colors duration-300 ${
+            className={`relative z-10 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium transition-colors duration-300 text-sm sm:text-base ${
               activeTab === "noob" ? "text-white dark:text-black" : "text-black dark:text-white"
             }`}
             whileHover={{ scale: 1.02 }}
@@ -688,7 +688,7 @@ export default function BlockchainSpace() {
           <Link href="/pro">
             <motion.button
               onClick={() => setActiveTab("pro")}
-              className={`relative z-10 px-6 py-3 rounded-full font-medium transition-colors duration-300 ${
+              className={`relative z-10 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-medium transition-colors duration-300 text-sm sm:text-base ${
                 activeTab === "pro" ? "text-white dark:text-black" : "text-black dark:text-white"
               }`}
               whileHover={{ scale: 1.02 }}
@@ -697,8 +697,9 @@ export default function BlockchainSpace() {
               Pro
             </motion.button>
           </Link>
-        </div>
-      </motion.nav>
+          </div>
+        </motion.nav>
+      </div>
 
       {/* Compare Modal */}
       <CompareModal

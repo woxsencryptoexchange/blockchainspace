@@ -159,43 +159,187 @@ export function ComparisonView({ selectedChains, onAddMore, onExit }: Comparison
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="flex items-center justify-between"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0"
       >
         <div>
-          <h2 className="text-2xl font-bold text-black dark:text-white">Blockchain Comparison</h2>
-          <p className="text-gray-600 dark:text-gray-400">Comparing {chainsWithSentiment.length} blockchains</p>
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-black dark:text-white">Blockchain Comparison</h2>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Comparing {chainsWithSentiment.length} blockchains</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <Button
             onClick={onAddMore}
             variant="outline"
             disabled={chainsWithSentiment.length >= 4}
-            className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 text-sm sm:text-base px-3 sm:px-4"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Add More
+            <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Add More</span>
+            <span className="sm:hidden">Add</span>
           </Button>
           <Button
             onClick={onExit}
-            className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+            className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 text-sm sm:text-base px-3 sm:px-4"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Exit Compare
+            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Exit Compare</span>
+            <span className="sm:hidden">Exit</span>
           </Button>
         </div>
       </motion.div>
 
-      {/* Comparison Table */}
+      {/* Mobile View */}
+      <div className="block lg:hidden">
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="space-y-4"
+        >
+          {chainsWithSentiment.map((chain: BlockchainData, chainIndex: number) => (
+            <motion.div
+              key={chain.id}
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.1 + chainIndex * 0.1 }}
+              className="bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
+            >
+              {/* Chain Header */}
+              <div className="p-4 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
+                <div className="flex items-center space-x-3">
+                  <img src={chain.logo} alt={chain.name} className="w-12 h-12 rounded-full" onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }} />
+                  <div>
+                    <h3 className="font-bold text-lg text-black dark:text-white">{chain.name}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{chain.symbol}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Metrics Grid */}
+              <div className="p-4 space-y-3">
+                {metrics.map((metric) => (
+                  <div key={metric.key} className="flex items-center justify-between py-2 px-3 bg-white dark:bg-gray-950 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <metric.icon className={`w-4 h-4 ${metric.color}`} />
+                      <span className="text-sm font-medium text-black dark:text-white">{metric.label}</span>
+                    </div>
+                    <span 
+                      className={`text-sm font-bold ${
+                        metric.key === 'priceChange24h' 
+                          ? chain[metric.key] >= 0 
+                            ? 'text-green-500' 
+                            : 'text-red-500'
+                          : metric.color
+                      }`}
+                    >
+                      {metric.prefix || ""}
+                      {metric.key === 'priceChange24h' && chain[metric.key] >= 0 ? '+' : ''}
+                      {typeof chain[metric.key as keyof typeof chain] === "number"
+                        ? (chain[metric.key as keyof typeof chain] as number).toLocaleString()
+                        : chain[metric.key as keyof typeof chain]}
+                      {metric.suffix || ""}
+                    </span>
+                  </div>
+                ))}
+                
+                {/* Market Sentiment */}
+                <div className="flex items-center justify-between py-2 px-3 bg-white dark:bg-gray-950 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="w-4 h-4 text-amber-500" />
+                    <span className="text-sm font-medium text-black dark:text-white">Market Sentiment</span>
+                  </div>
+                  <div className="text-right">
+                    {loadingSentiment ? (
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 border border-gray-300 border-t-blue-500 rounded-full animate-spin mr-1"></div>
+                        <span className="text-xs text-gray-500">Loading...</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <Badge 
+                          className={`text-xs ${
+                            chain.sentiment === 'bullish' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                              : chain.sentiment === 'bearish'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+                          } border-0 capitalize`}
+                        >
+                          {chain.sentiment}
+                        </Badge>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                          {(chain.sentimentPercentage || 0).toFixed(1)}% bullish
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* RPC Endpoint */}
+                {chain.rpc_node && (
+                  <div className="py-2 px-3 bg-white dark:bg-gray-950 rounded-lg">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center space-x-2">
+                        <Globe className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm font-medium text-black dark:text-white">RPC Endpoint</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyToClipboard(chain.rpc_node, 'RPC')}
+                        className="p-1 h-6 w-6 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+                        title="Copy RPC URL"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 break-all">
+                      {chain.rpc_node}
+                    </span>
+                  </div>
+                )}
+                
+                {/* WSS Endpoint */}
+                {chain.wss_rpc_node && (
+                  <div className="py-2 px-3 bg-white dark:bg-gray-950 rounded-lg">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center space-x-2">
+                        <Globe className="w-4 h-4 text-green-500" />
+                        <span className="text-sm font-medium text-black dark:text-white">WSS Endpoint</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyToClipboard(chain.wss_rpc_node, 'WSS')}
+                        className="p-1 h-6 w-6 hover:bg-green-100 dark:hover:bg-green-900/20"
+                        title="Copy WSS URL"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 break-all">
+                      {chain.wss_rpc_node}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+      
+      {/* Desktop View */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="overflow-x-auto"
+        className="hidden lg:block overflow-x-auto"
       >
         <div className="min-w-full">
           {/* Chain Headers */}

@@ -25,8 +25,14 @@ interface ChatSession {
 export function ChatWidget() {
   // Size configuration - tweak these values to adjust widget dimensions
   const WIDGET_SIZES = {
-    default: { width: 'w-96', height: 'h-[480px]' },
-    maximized: { width: 'w-[500px]', height: 'h-[600px]' }
+    default: { 
+      mobile: { width: 'w-[calc(100vw-1rem)]', height: 'h-[400px]' },
+      desktop: { width: 'w-96', height: 'h-[480px]' }
+    },
+    maximized: { 
+      mobile: { width: 'w-[calc(100vw-1rem)]', height: 'h-[500px]' },
+      desktop: { width: 'w-[500px]', height: 'h-[600px]' }
+    }
   }
 
   // Chat storage configuration
@@ -260,21 +266,21 @@ export function ChatWidget() {
     <>
       {/* Chat Button */}
       <motion.div
-        className="fixed bottom-6 right-6 z-50"
+        className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 1, type: "spring", stiffness: 200 }}
       >
         <motion.button
           onClick={() => setIsOpen(true)}
-          className="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-all duration-300"
+          className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-all duration-300"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           style={{
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           }}
         >
-          <MessageCircle className="w-6 h-6" />
+          <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
         </motion.button>
       </motion.div>
 
@@ -285,61 +291,63 @@ export function ChatWidget() {
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            className={`fixed bottom-24 right-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden transition-all duration-300 ${
-              isMaximized ? `${WIDGET_SIZES.maximized.width} ${WIDGET_SIZES.maximized.height}` : `${WIDGET_SIZES.default.width} ${WIDGET_SIZES.default.height}`
+            className={`fixed bottom-36 sm:bottom-24 right-2 sm:right-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden transition-all duration-300 ${
+              isMaximized 
+                ? 'w-[calc(100vw-1rem)] h-[500px] sm:w-[500px] sm:h-[600px]' 
+                : 'w-[calc(100vw-1rem)] h-[400px] sm:w-96 sm:h-[480px]'
             }`}
           >
             {/* Header */}
-            <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Bot className="w-5 h-5" />
-                <div>
-                  <h3 className="font-semibold">Blockchain Assistant</h3>
-                  <p className="text-xs opacity-90">Ask me about crypto & DeFi</p>
+            <div className="p-3 sm:p-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white flex items-center justify-between">
+              <div className="flex items-center space-x-2 min-w-0 flex-1">
+                <Bot className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-sm sm:text-base truncate">Blockchain Assistant</h3>
+                  <p className="text-xs opacity-90 truncate">Ask me about crypto & DeFi</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-1 flex-shrink-0">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={downloadChat}
-                  className="text-white hover:bg-white/20 h-8 w-8"
+                  className="text-white hover:bg-white/20 h-7 w-7 sm:h-8 sm:w-8"
                   title="Download Chat"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={clearChat}
-                  className="text-white hover:bg-white/20 h-8 w-8"
+                  className="text-white hover:bg-white/20 h-7 w-7 sm:h-8 sm:w-8"
                   title="Clear Chat"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsMaximized(!isMaximized)}
-                  className="text-white hover:bg-white/20 h-8 w-8"
+                  className="text-white hover:bg-white/20 h-7 w-7 sm:h-8 sm:w-8"
                   title={isMaximized ? "Minimize" : "Maximize"}
                 >
-                  {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  {isMaximized ? <Minimize2 className="w-3 h-3 sm:w-4 sm:h-4" /> : <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4" />}
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsOpen(false)}
-                  className="text-white hover:bg-white/20 h-8 w-8"
+                  className="text-white hover:bg-white/20 h-7 w-7 sm:h-8 sm:w-8"
                   title="Close"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
               </div>
             </div>
 
             {/* Messages */}
-            <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+            <ScrollArea className="flex-1 p-3 sm:p-4" ref={scrollAreaRef}>
               <div className="space-y-4">
                 {messages.map((message) => (
                   <div
@@ -384,7 +392,7 @@ export function ChatWidget() {
             </ScrollArea>
 
             {/* Input */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+            <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-800">
               {error && (
                 <div className="mb-2 p-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg">
                   {error}
@@ -399,14 +407,14 @@ export function ChatWidget() {
                   }}
                   placeholder="Ask about blockchain... (max 200 words)"
                   onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                  className="flex-1 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                  className="flex-1 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-sm sm:text-base"
                 />
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim() || isLoading}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
               </div>
             </div>

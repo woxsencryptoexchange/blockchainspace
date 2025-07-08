@@ -59,27 +59,27 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains, block
             className="fixed inset-4 md:inset-8 lg:inset-16 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-2xl z-50 overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-black dark:text-white">Compare Blockchains</h2>
-                <Button variant="ghost" size="icon" onClick={onClose}>
-                  <X className="w-5 h-5" />
+            <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-black dark:text-white truncate pr-2">Compare Blockchains</h2>
+                <Button variant="ghost" size="icon" onClick={onClose} className="flex-shrink-0">
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
                 <Input
                   placeholder="Search blockchains..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="max-w-md"
+                  className="w-full sm:max-w-md"
                 />
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Selected: {selected.length}/4</span>
+                <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-3">
+                  <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Selected: {selected.length}/4</span>
                   <Button
                     onClick={handleCompare}
                     disabled={selected.length < 2}
-                    className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                    className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 text-sm sm:text-base px-3 sm:px-4"
                   >
                     Compare ({selected.length})
                   </Button>
@@ -89,19 +89,19 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains, block
 
             {/* Selected Chains */}
             {selected.length > 0 && (
-              <div className="p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selected for comparison:</p>
-                <div className="flex flex-wrap gap-2">
+              <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+                <p className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selected for comparison:</p>
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {selected.map((chain: BlockchainData,index:number) => (
                     <Badge
                       key={index}
                       variant="outline"
-                      className="bg-white py-2 dark:bg-black border-gray-200 dark:border-gray-800 text-black dark:text-white flex items-center gap-2"
+                      className="bg-white py-1.5 sm:py-2 px-2 sm:px-3 dark:bg-black border-gray-200 dark:border-gray-800 text-black dark:text-white flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
                     >
-                      <img src={chain.logo} alt={chain.name} className="w-4 h-4" />
-                      {chain.name}
-                      <button onClick={() => toggleSelection(chain)} className="ml-1 hover:text-red-500">
-                        <X className="w-3 h-3" />
+                      <img src={chain.logo} alt={chain.name} className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate max-w-[80px] sm:max-w-none">{chain.name}</span>
+                      <button onClick={() => toggleSelection(chain)} className="ml-0.5 sm:ml-1 hover:text-red-500 flex-shrink-0">
+                        <X className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                       </button>
                     </Badge>
                   ))}
@@ -110,8 +110,8 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains, block
             )}
 
             {/* Chain List */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {filteredChains?.map((chain: BlockchainData,index:number) => {
                   const isSelected = selected.some((c: BlockchainData) => c.id === chain.id)
                   const canSelect = selected.length < 4 || isSelected
@@ -120,7 +120,7 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains, block
                     <motion.div
                       key={index}
                       whileHover={{ scale: canSelect ? 1.02 : 1 }}
-                      className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 ${
+                      className={`p-3 sm:p-4 rounded-xl border cursor-pointer transition-all duration-200 ${
                         isSelected
                           ? "border-black dark:border-white bg-gray-100 dark:bg-gray-900"
                           : canSelect
@@ -129,34 +129,36 @@ export function CompareModal({ isOpen, onClose, onCompare, selectedChains, block
                       }`}
                       onClick={() => canSelect && toggleSelection(chain)}
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <img src={chain.logo} alt={chain.name} className="w-8 h-8 rounded-full" />
-                          <div>
-                            <h3 className="font-semibold text-black dark:text-white">{chain.name}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{chain.symbol}</p>
+                      <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                          <img src={chain.logo} alt={chain.name} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-sm sm:text-base text-black dark:text-white truncate">{chain.name}</h3>
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">{chain.symbol}</p>
                           </div>
                         </div>
-                        {isSelected ? (
-                          <Check className="w-5 h-5 text-green-500" />
-                        ) : canSelect ? (
-                          <Plus className="w-5 h-5 text-gray-400" />
-                        ) : null}
+                        <div className="flex-shrink-0">
+                          {isSelected ? (
+                            <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+                          ) : canSelect ? (
+                            <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                          ) : null}
+                        </div>
                       </div>
                       
                       {/* Additional metrics for quick preview */}
-                      <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <div className="space-y-0.5 sm:space-y-1 text-xs text-gray-600 dark:text-gray-400">
                         <div className="flex justify-between">
                           <span>Market Cap:</span>
-                          <span>${chain.marketCap}B</span>
+                          <span className="font-medium">${chain.marketCap}B</span>
                         </div>
                         <div className="flex justify-between">
                           <span>TVL:</span>
-                          <span>${chain.tvl}B</span>
+                          <span className="font-medium">${chain.tvl}B</span>
                         </div>
                         <div className="flex justify-between">
                           <span>TPS:</span>
-                          <span>{chain.tps.toLocaleString()}</span>
+                          <span className="font-medium">{chain.tps.toLocaleString()}</span>
                         </div>
                       </div>
                     </motion.div>
