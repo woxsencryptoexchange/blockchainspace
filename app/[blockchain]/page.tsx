@@ -185,7 +185,6 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
     }
 
     const data = await response.json();
-    console.log('data  : ',data.chart)
     setIsLoadingChart(false);
     setChartData(data.chart); 
 
@@ -197,6 +196,31 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
   }
 
  }
+
+ function formatPrice(value: number): string {
+
+  try{
+    
+    if (value === 0) return "0"
+    if (value >= 1) return value.toFixed(2) // 12.234 → 12.23
+    if (value >= 0.01) return value.toFixed(4) // 0.012345 → 0.0123
+    
+    // For very small values like 0.0000001234 → show leading digits
+    const parts = value.toExponential(2).split("e")
+    const leading = Number(parts[0]).toFixed(2)
+    const exponent = parseInt(parts[1])
+    const formatted = (Number(leading) * Math.pow(10, exponent)).toPrecision(2)
+    
+    // Preserve all starting zeroes (e.g., 0.00000012)
+    const match = value.toString().match(/^0\.0*(\d{1,2})/)
+    return match ? `0.000000${match[1]}` : formatted
+
+  }catch(err){
+    console.log('err in formatPrice : ',err);
+    return "error"
+  }
+
+  }
 
   // Use blockchain with sentiment data if available, otherwise use original blockchain
   const displayBlockchain = blockchainWithSentiment || blockchain
@@ -249,7 +273,7 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
           </div>
           <Badge className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-0 text-sm px-3 py-1">
             <TrendingUp className="w-4 h-4 mr-1" />
-            {displayBlockchain.priceChange24h > 0 ? '+' : ''}{displayBlockchain.priceChange24h?.toFixed(2)}%
+            {displayBlockchain.priceChange24h > 0 ? '+' : ''}{formatPrice(displayBlockchain.priceChange24h)}%
           </Badge>
         </div>
       </motion.header>
@@ -300,7 +324,7 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
                   <Zap className="w-4 h-4 text-orange-500" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">Current Price</span>
                 </div>
-                <p className="text-2xl font-bold text-orange-500">${displayBlockchain.currentPrice?.toFixed(4)}</p>
+                <p className="text-2xl font-bold text-orange-500">${formatPrice(displayBlockchain.currentPrice)}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -424,7 +448,7 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
                           (displayBlockchain.sentimentPercentage || 0) >= 70 ? 'text-green-500' :
                           (displayBlockchain.sentimentPercentage || 0) <= 30 ? 'text-red-500' : 'text-gray-500'
                         }`}>
-                          {(displayBlockchain.sentimentPercentage || 0).toFixed(1)}%
+                          {formatPrice((displayBlockchain.sentimentPercentage || 0))}%
                         </span>
                       </div>
                     </>
@@ -468,7 +492,7 @@ export default function BlockchainDetail({ params }: { params: { blockchain: str
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Price Change</p>
                     <p className={`font-medium ${displayBlockchain.priceChange24h > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {displayBlockchain.priceChange24h > 0 ? '+' : ''}{displayBlockchain.priceChange24h?.toFixed(2)}%
+                      {displayBlockchain.priceChange24h > 0 ? '+' : ''}{formatPrice(displayBlockchain.priceChange24h)}%
                     </p>
                   </div>
                 </div>

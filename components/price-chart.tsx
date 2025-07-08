@@ -28,59 +28,7 @@ interface PriceChartProps {
   tokenSymbol?: string
 }
 
-const CustomCandlestick = ({ payload, x, y, width, height }: any) => {
-  if (!payload) return null
-  
-  const { open, high, low, close, isPositive } = payload
-  const bodyHeight = Math.abs(close - open)
-  const bodyY = Math.min(open, close)
-  const wickColor = isPositive ? "#22c55e" : "#ef4444"
-  const bodyColor = isPositive ? "#22c55e" : "#ef4444"
-  
-  // Convert price values to pixel positions
-  const candleHeight = height || 200
-  const priceRange = high - low
-  const pixelPerPrice = candleHeight / priceRange
-  
-  const highY = y - ((high - low) * pixelPerPrice)
-  const lowY = y
-  const openY = y - ((open - low) * pixelPerPrice)
-  const closeY = y - ((close - low) * pixelPerPrice)
-  const bodyPixelHeight = Math.abs(closeY - openY)
-  const bodyPixelY = Math.min(openY, closeY)
-  
-  const candleWidth = Math.max(width * 0.6, 2)
-  const wickWidth = 1
-  const candleX = x + (width - candleWidth) / 2
-  const wickX = x + width / 2
-  
-  return (
-    <g>
-      {/* High-Low Wick */}
-      <line
-        x1={wickX}
-        y1={highY}
-        x2={wickX}
-        y2={lowY}
-        stroke={wickColor}
-        strokeWidth={wickWidth}
-      />
-      
-      {/* Open-Close Body */}
-      <rect
-        x={candleX}
-        y={bodyPixelY}
-        width={candleWidth}
-        height={Math.max(bodyPixelHeight, 1)}
-        fill={bodyColor}
-        stroke={bodyColor}
-        strokeWidth={1}
-      />
-    </g>
-  )
-}
-
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label,formatPrice }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload
     const time = format(new Date(data.timestamp * 1000), "MMM dd, HH:mm")
@@ -91,20 +39,20 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <div className="space-y-1">
           <div className="flex justify-between gap-4">
             <span className="text-sm text-gray-600 dark:text-gray-400">Open:</span>
-            <span className="text-sm font-medium">${data.open.toFixed(2)}</span>
+            <span className="text-sm font-medium">${formatPrice(data.open)}</span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-sm text-gray-600 dark:text-gray-400">High:</span>
-            <span className="text-sm font-medium text-green-600">${data.high.toFixed(2)}</span>
+            <span className="text-sm font-medium text-green-600">${formatPrice(data.high)}</span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-sm text-gray-600 dark:text-gray-400">Low:</span>
-            <span className="text-sm font-medium text-red-600">${data.low.toFixed(2)}</span>
+            <span className="text-sm font-medium text-red-600">${formatPrice(data.low)}</span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-sm text-gray-600 dark:text-gray-400">Close:</span>
             <span className={`text-sm font-medium ${data.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-              ${data.close.toFixed(2)}
+              ${formatPrice(data.close)}
             </span>
           </div>
         </div>
@@ -125,7 +73,8 @@ export function PriceChart({ data, tokenSymbol = "ETH" }: PriceChartProps) {
       // Transform OHLC data for chart
       const transformedData = data.map((item) => ({
         timestamp: item.timestamp,
-        time: format(new Date(item.timestamp * 1000), "HH:mm"),
+        // time: format(new Date(item.timestamp * 1000), "HH:mm"),
+        time: format(new Date(item.timestamp * 1000), "MMM dd"),
         open: item.open.value,
         high: item.high.value,
         low: item.low.value,
@@ -160,17 +109,49 @@ export function PriceChart({ data, tokenSymbol = "ETH" }: PriceChartProps) {
     )
   }
 
+   function formatPrice(value: number): string {
+
+  try{
+    
+    if (value === 0) return "0"
+    if (value >= 1) return value.toFixed(2) // 12.234 → 12.23
+    if (value >= 0.01) return value.toFixed(4) // 0.012345 → 0.0123
+    
+    // For very small values like 0.0000001234 → show leading digits
+    const parts = value.toExponential(2).split("e")
+    const leading = Number(parts[0]).toFixed(2)
+    const exponent = parseInt(parts[1])
+    const formatted = (Number(leading) * Math.pow(10, exponent)).toPrecision(2)
+    
+    // Preserve all starting zeroes (e.g., 0.00000012)
+    const match = value.toString().match(/^0\.0*(\d{1,2})/)
+    return match ? `0.000000${match[1]}` : formatted
+
+  }catch(err){
+    console.log('err in formatPrice : ',err);
+    return "error"
+  }
+
+  }
+
+  const prices = chartData.map(d => d.close)
+const minPrice = Math.min(...prices)
+const maxPrice = Math.max(...prices)
+
+const yMin = minPrice - (maxPrice - minPrice) * 0.05
+const yMax = maxPrice + (maxPrice - minPrice) * 0.05
+
   return (
     <div className="space-y-4">
       {/* Price Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-2xl font-bold text-black dark:text-white">
-            ${currentPrice.toFixed(2)}
+            ${formatPrice(currentPrice)}
           </h3>
           <div className="flex items-center space-x-2">
             <span className={`text-sm font-medium ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)} ({priceChangePercent >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}%)
+              {priceChange >= 0 ? '+' : ''}${formatPrice(priceChange)} ({priceChangePercent >= 0 ? '+' : ''}{formatPrice(priceChangePercent)}%)
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">24h</span>
           </div>
@@ -187,21 +168,19 @@ export function PriceChart({ data, tokenSymbol = "ETH" }: PriceChartProps) {
       <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-            <XAxis 
-              dataKey="time"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              interval="preserveStartEnd"
-            />
-            <YAxis 
-              domain={['dataMin - 5', 'dataMax + 5']}
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              tickFormatter={(value) => `$${value.toFixed(0)}`}
-            />
-            <Tooltip content={<CustomTooltip />} />
+  <XAxis
+  dataKey="time"
+  tick={{ fontSize: 12, fill: '#6b7280' }}
+/>
+<YAxis 
+  domain={[yMin, yMax]}
+  axisLine={false}
+  tickLine={false}
+  tick={{ fontSize: 12, fill: '#6b7280' }}
+  tickFormatter={(value) => `$${formatPrice(value)}`}
+/>
+
+            <Tooltip content={<CustomTooltip formatPrice={formatPrice}  />} />
             
             {/* Price line connecting close prices */}
             <Line

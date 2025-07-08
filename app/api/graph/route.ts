@@ -7,28 +7,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing geckoId' }, { status: 400 })
   }
 
-  const url = `https://api.coingecko.com/api/v3/coins/${geckoId}/ohlc?vs_currency=usd&days=1`
+  const url = `https://api.coingecko.com/api/v3/coins/${geckoId}/market_chart?vs_currency=usd&days=30`
 
   try {
     const res = await fetch(url)
-    if (!res.ok) {
-      throw new Error(`CoinGecko error: ${res.status}`)
-    }
+    if (!res.ok) throw new Error(`CoinGecko error: ${res.status}`)
 
-    const rawData: [number, number, number, number, number][] = await res.json()
+    const { prices } = await res.json()
 
-    const chartData = rawData.map(([timestamp, open, high, low, close], index) => ({
-      id: `${geckoId}-${index}`,
-      timestamp,
-      open: { value: open },
-      high: { value: high },
-      low: { value: low },
-      close: { value: close },
-    }))
+    const grouped: Record<string, number[]> = {}
+
+    prices.forEach(([timestamp, price]: [number, number]) => {
+      const day = new Date(timestamp).toISOString().split('T')[0]
+      if (!grouped[day]) grouped[day] = []
+      grouped[day].push(price)
+    })
+
+    const chartData = Object.entries(grouped).map(([day, prices], index) => {
+      const timestamp = new Date(day).getTime()
+      return {
+        id: `${geckoId}-${index}`,
+        timestamp,
+        open: { value: prices[0] },
+        high: { value: Math.max(...prices) },
+        low: { value: Math.min(...prices) },
+        close: { value: prices[prices.length - 1] }
+      }
+    })
 
     return NextResponse.json({ chart: chartData }, { status: 200 })
   } catch (error) {
-    console.error('❌ Failed to fetch CoinGecko data:', error)
+    console.error('❌ Error generating OHLC chart:', error)
     return NextResponse.json({ error: 'Failed to fetch price chart' }, { status: 500 })
   }
 }
