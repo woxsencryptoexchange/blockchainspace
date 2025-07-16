@@ -7,6 +7,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing geckoId' }, { status: 400 })
   }
 
+  console.log("🥲🥲🥲 🥲 : ",geckoId)
+
   const url = `https://api.coingecko.com/api/v3/coins/${geckoId}/market_chart?vs_currency=usd&days=30`
 
   try {
@@ -23,6 +25,8 @@ export async function POST(req: NextRequest) {
       grouped[day].push(price)
     })
 
+    console.log("grouped is : ",grouped)
+
     const chartData = Object.entries(grouped).map(([day, prices], index) => {
       const timestamp = new Date(day).getTime()
       return {
@@ -34,6 +38,8 @@ export async function POST(req: NextRequest) {
         close: { value: prices[prices.length - 1] }
       }
     })
+
+    console.log("fucking chart data : ",chartData)
 
     return NextResponse.json({ chart: chartData }, { status: 200 })
   } catch (error) {

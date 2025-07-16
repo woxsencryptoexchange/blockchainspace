@@ -1,3 +1,4 @@
+
 import { tpsData,rpcData } from "../../data/default";
 
 export interface BlockchainData {
@@ -111,13 +112,7 @@ export async function GetChains() {
 
     // Filter out chains without valid gecko_id
     blockchainData = blockchainData.filter((chain: any) => {
-      // if (
-      //   !chain.gecko_id ||
-      //   chain.gecko_id == "null" ||
-      //   chain.gecko_id == "undefined"
-      // ) {
-      //   console.log("🔥 Invalid chain or geko_id found: ", chain);
-      // }
+
       return (
         chain.gecko_id &&
         chain.gecko_id !== "null" &&
@@ -178,11 +173,29 @@ export async function GetChains() {
 
     // Update TPS data
     blockchainData.forEach((chain: any) => {
-      chain.tps = tpsData[chain.gecko_id] != 0 ? tpsData[chain.gecko_id] : 100; // Default TPS if not found
-      chain.rpc_node = rpcData[chain.gecko_id][0]
-      chain.wss_rpc_node = rpcData[chain.gecko_id][1]
-    });
+      const arr = rpcData[chain.gecko_id];
+      
+      if (!arr) {
+        console.error("Missing rpcData for chain:", chain.gecko_id);
+        chain.tps = tpsData[chain.gecko_id] || 100;
+        chain.rpc_node = "empty";
+        chain.wss_rpc_node = "empty";
+        return;
+      }
+      
+      if (arr.length < 2) {
+        console.error("rpcData entry too short for:", chain.gecko_id, arr);
+        chain.tps = tpsData[chain.gecko_id] || 100;
+        chain.rpc_node = arr[0] || "empty";
+        chain.wss_rpc_node = "empty";
+        return;
+      }
 
+      chain.tps = tpsData[chain.gecko_id] || 100;
+      chain.rpc_node = arr[0];
+      chain.wss_rpc_node = arr[1];
+    });
+    
     // Create final clean data structure
     const finalData: BlockchainData[] = blockchainData.map(
       (chain: any, index: number) => ({

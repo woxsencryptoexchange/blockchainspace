@@ -107,16 +107,16 @@ export const rpcData: { [key: string]: [string, string] } = {
     "wss://sei-ws.mainnet.sei.io"
   ],
   "sonic-3": ["https://sonic-rpc.publicnode.com:443", "wss://sonic-rpc.publicnode.com:443"],
-  "bsquared-network": ["https://mainnet.b2-rpc.com", ""],
+  "bsquared-network": ["https://mainnet.b2-rpc.com", " "],
   coredaoorg: ["https://rpc.ankr.com/core", "wss://core.drpc.org"],
   "crypto-com-chain": ["https://cronos-evm-rpc.publicnode.com", "wss://cronos.drpc.org"],
-  hemis: ["", ""],
+  hemis: [" ", " "],
   optimism: [
     "https://mainnet.optimism.io",
     "wss://mainnet.optimism.io/ws"
   ],
-  taiko: ["", ""],
-  "bitlayer-bitvm": ["", ""],
+  taiko: [" ", " "],
+  "bitlayer-bitvm": [" ", " "],
   rootstock: [
     "https://public-node.rsk.co",
     "wss://public-node.rsk.co/ws"
@@ -125,10 +125,10 @@ export const rpcData: { [key: string]: [string, string] } = {
     "https://rpc.gnosischain.com",
     "wss://rpc.gnosischain.com/wss"
   ],
-  pulsechain: ["", ""],
+  pulsechain: [" ", " "],
   cardano: [
     "https://cardano-mainnet.blockfrost.io/api/v0",
-    ""
+    " "
   ],
   "dydx-chain": ["https://dydx-rpc.publicnode.com:443", "wss://dydx-rpc.publicnode.com:443/websocket"],
   mantle: ["https://mantle-rpc.publicnode.com", "wss://mantle-rpc.publicnode.com"],
@@ -136,9 +136,9 @@ export const rpcData: { [key: string]: [string, string] } = {
     "https://eos.greymass.com",
     "wss://eos.greymass.com/ws"
   ],
-  "katana-inu": ["", ""],
-  "flare-networks": ["", ""],
-  "the-open-network": ["", ""],
+  "katana-inu": [" ", " "],
+  "flare-networks": [" ", " "],
+  "the-open-network": [" ", " "],
   kava: [
     "https://evm.kava.io",
     "wss://evm.kava.io/ws"
@@ -147,21 +147,21 @@ export const rpcData: { [key: string]: [string, string] } = {
     "https://rpc.mainnet.near.org",
     "wss://rpc.mainnet.near.org/ws"
   ],
-  bob: ["", ""],
-  hydradx: ["", ""],
-  plume: ["", ""],
-  goat: ["", ""],
+  bob: [" ", " "],
+  hydradx: [" ", " "],
+  plume: [" ", " "],
+  goat: [" ", " "],
   blockstack: [
     "https://stacks-node-api.mainnet.stacks.co",
     "wss://stacks-node-api.mainnet.stacks.co/ws"
   ],
-  mixin: ["", ""],
-  blast: ["", ""],
+  mixin: [" ", " "],
+  blast: [" ", " "],
   scroll: [
     "https://scroll.io/rpc",
     "wss://scroll.io/ws"
   ],
-  "ailayer-token": ["", ""],
+  "ailayer-token": [" ", " "],
   starknet: [
     "https://starknet.io/rpc",
     "wss://starknet.io/ws"
@@ -174,12 +174,12 @@ export const rpcData: { [key: string]: [string, string] } = {
     "https://access.mainnet.nodes.onflow.org",
     "wss://access.mainnet.nodes.onflow.org"
   ],
-  morph: ["", ""],
+  morph: [" ", " "],
   "hedera-hashgraph": [
     "https://hedera.api.onflow.org",
     "wss://hedera.api.onflow.org/ws"
   ],
-  movement: ["", ""],
+  movement: [" ", " "],
   thorchain: [
     "https://thorchain.net/rpc",
     "wss://thorchain.net/ws"

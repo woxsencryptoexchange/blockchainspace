@@ -72,6 +72,7 @@ export default function BlockchainSpace() {
 
         const response = await fetch('/api/blockchain-data')
         if (response.ok) {
+          // alert('data from mdb')
           const data = await response.json()
           setBlockchainData(data)
         }
