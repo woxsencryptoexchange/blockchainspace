@@ -14,7 +14,7 @@ export function Footer() {
   const quickLinks = [
     { name: "Noob View", href: "/" },
     { name: "Pro View", href: "/pro" },
-    { name: "AIRC Website", href: "https://wou.aircwou.in/" },
+    { name: "AIRC Website", href: "https://www.aircwou.in/" },
   ]
 
   return (
@@ -98,7 +98,7 @@ export function Footer() {
                   href="mailto:airc@woxsen.edu.in"
                   className="text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                 >
-                  airc@woxsen.edu.in
+                  airesearchcentre@woxsen.edu.in
                 </a>
               </div>
               <div className="flex items-center space-x-2">
@@ -126,7 +126,7 @@ export function Footer() {
           className="border-t border-gray-200 dark:border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center"
         >
           <p className="text-sm text-gray-500 dark:text-gray-500 mb-4 md:mb-0">
-            © 2025 BlockchainSpace. All rights reserved. Built with ❤️ by AIRC, Woxsen University.
+            © 2026 BlockchainSpace. All rights reserved. Built with ❤️ by AIRC, Woxsen University.
           </p>
    
         </motion.div>

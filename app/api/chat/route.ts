@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenAI } from '@google/genai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const SYSTEM_PROMPT = `You are a blockchain and Web3 expert assistant developed by the AI Research Center (AIRC) at Woxsen University. Follow these guidelines strictly:
 
@@ -16,10 +16,6 @@ const SYSTEM_PROMPT = `You are a blockchain and Web3 expert assistant developed 
 6. NO FINANCIAL ADVICE: Never provide investment advice. Educational information only.
 
 7. IDENTITY: You are an AI model developed by AIRC at Woxsen University. Never mention being Gemini, Google AI, or any other AI model. If asked about your identity, say you're developed by the AI Research Center at Woxsen University.`
-
-
-const apiKey = process.env.GEMINI_API_KEY
-const ai = new GoogleGenAI({apiKey: apiKey});
 
 
 export async function POST(request: NextRequest) {
@@ -44,22 +40,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for Gemini API key
+    const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) {
+      console.error('GEMINI_API_KEY is not set in environment variables')
       return NextResponse.json(
         { error: 'Gemini API key not configured' },
         { status: 500 }
       )
     }
 
-    // Create the prompt with system instructions
-    const prompt = `${SYSTEM_PROMPT}\n\nUser question: ${message}`
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash-lite',
+      systemInstruction: SYSTEM_PROMPT,
+    })
 
-     const result = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-001',
-    contents: prompt,
-  });
-
-  const text = result.text
+    const result = await model.generateContent(message)
+    const response = result.response
+    const text = response.text()
 
     return NextResponse.json({
       message: text,
@@ -71,16 +69,23 @@ export async function POST(request: NextRequest) {
     
     // Handle specific Gemini API errors
     if (error instanceof Error) {
-      if (error.message.includes('API key')) {
+      console.error('Error message:', error.message)
+      if (error.message.includes('API_KEY_INVALID') || error.message.includes('API key')) {
         return NextResponse.json(
           { error: 'Invalid API key configuration' },
           { status: 401 }
         )
       }
-      if (error.message.includes('quota')) {
+      if (error.message.includes('quota') || error.message.includes('RATE_LIMIT')) {
         return NextResponse.json(
           { error: 'API quota exceeded. Please try again later.' },
           { status: 429 }
+        )
+      }
+      if (error.message.includes('403') || error.message.includes('PERMISSION_DENIED')) {
+        return NextResponse.json(
+          { error: 'API access denied. Please check that the Generative AI API is enabled for your API key.' },
+          { status: 403 }
         )
       }
     }

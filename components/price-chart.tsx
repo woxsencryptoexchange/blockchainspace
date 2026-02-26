@@ -31,7 +31,7 @@ interface PriceChartProps {
 const CustomTooltip = ({ active, payload, label,formatPrice }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload
-    const time = format(new Date(data.timestamp * 1000), "MMM dd, HH:mm")
+    const time = format(new Date(data.timestamp), "MMM dd, HH:mm")
     
     return (
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
@@ -74,7 +74,7 @@ export function PriceChart({ data, tokenSymbol = "ETH" }: PriceChartProps) {
       const transformedData = data.map((item) => ({
         timestamp: item.timestamp,
         // time: format(new Date(item.timestamp * 1000), "HH:mm"),
-        time: format(new Date(item.timestamp * 1000), "MMM dd"),
+        time: format(new Date(item.timestamp), "MMM dd"),
         open: item.open.value,
         high: item.high.value,
         low: item.low.value,
@@ -159,7 +159,7 @@ const yMax = maxPrice + (maxPrice - minPrice) * 0.05
         <div className="text-right">
           <p className="text-sm text-gray-600 dark:text-gray-400">Latest {tokenSymbol} Price</p>
           <p className="text-xs text-gray-500 dark:text-gray-500">
-            {format(new Date(chartData[chartData.length - 1]?.timestamp * 1000), "MMM dd, HH:mm")}
+            {format(new Date(chartData[chartData.length - 1]?.timestamp), "MMM dd, HH:mm")}
           </p>
         </div>
       </div>
